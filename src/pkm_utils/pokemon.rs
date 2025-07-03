@@ -174,7 +174,7 @@ impl Pokemon {
     fn level_from_xp(&self) -> u8 {
         // Retrieve the species, experience type, and current experience:
         let pkm_id = self.species.id() as usize;
-        let exp_type = BASE_STATS.get(pkm_id).expect("Invalid species ID")[0];
+        let exp_type = should_be_some!(BASE_STATS.get(pkm_id), "Invalid species ID")[0];
         let exp = self.experience;
 
         // Iteratively check what level corresponds to the current experience:
