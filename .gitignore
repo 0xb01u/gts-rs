@@ -1,0 +1,7 @@
+# Compilation results:
+target/
+
+# Exported/received Pokémon folder:
+pokemon/
+# Exported/received Pokémon log:
+recv_pkm.log
