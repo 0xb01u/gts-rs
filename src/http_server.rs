@@ -139,8 +139,7 @@ fn gts_response_gen5(body: impl MessageBody + 'static) -> HttpResponse<BoxBody> 
 /// a macro is used to avoid code repetition.
 ///
 /// # Arguments
-/// * `$func` - The name of the middleware function to generate.
-/// * `$gts_response` - The GTS response generation function to use.
+/// * `$gen` - The generation number for which to generate the middleware function (4 or 5).
 macro_rules! handle_request {
     ($gen:literal) => {
         paste! {
@@ -224,6 +223,14 @@ struct PostData {
     data: String,
 }
 
+/// Macro to generate the post endpoints for Gen 4 and Gen 5.
+///
+/// This macro is used to avoid code repetition, as the Gen 4 and Gen 5 post endpoints differ only
+/// slightly: They have to indicate the internal GTS data structure that the received data belongs
+/// to the corresponding generation.
+///
+/// # Arguments
+/// * `$gen` - The generation number for which to generate the post endpoint function (4 or 5).
 macro_rules! post_endpoint {
     ($gen:literal) => {
         paste! {
@@ -287,6 +294,14 @@ async fn search() -> HttpResponse {
     response_from_body!(b"")
 }
 
+/// Macro to generate the result endpoints for Gen 4 and Gen 5.
+///
+/// This macro is used to avoid code repetition, as the Gen 4 and Gen 5 result endpoints differ
+/// only slightly: Both endpoints check which generation the Pokémon selected by the user belongs
+/// to, and only allow those of the corresponding generation to be sent.
+///
+/// # Arguments
+/// * `$gen` - The generation number for which to generate the result endpoint function (4 or 5).
 macro_rules! result_endpoint {
     ($gen:literal) => {
         paste! {
