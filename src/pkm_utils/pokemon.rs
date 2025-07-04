@@ -581,11 +581,7 @@ impl Pokemon {
             encoded_name.resize(0x5E - 0x48, 0);
             bytes[0x48..0x5E].copy_from_slice(&encoded_name);
         }
-        bytes[0x5F] = *should_be_some!(
-            GAMES.get_by_right(&self.origin_game.to_string()),
-            "Invalid origin game: {}",
-            self.origin_game
-        );
+        bytes[0x5F] = self.origin_game as u8;
         bytes[0x60..0x64].copy_from_slice(&self.sinnoh_ribbons[4..8]);
         // Block D: 0x68 - 0x82
         if !self.is_gen5 {
@@ -861,12 +857,9 @@ impl Pokemon {
             );
         }
         pkm.origin_game = should_be_ok!(
-            Game::try_from(should_be_some!(
-                GAMES.get_by_left(&bytes[0x5F]),
-                "Invalid origin game ID: {}",
-                bytes[0x5F]
-            )),
-            "Invalid game name"
+            bytes[0x5F].try_into(),
+            "Invalid origin game ID: {}",
+            bytes[0x5F]
         );
         pkm.sinnoh_ribbons[4..8].copy_from_slice(&bytes[0x60..0x64]);
         // Block D: 0x68 - 0x82

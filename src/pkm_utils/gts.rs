@@ -249,8 +249,7 @@ impl GTSData {
         data[0x33 + extra_offset] = region;
         data[0x34 + extra_offset] = self.trainer_class;
         data[0x35 + extra_offset] = if self.is_exchanged { 1 } else { 0 };
-        data[0x36 + extra_offset] =
-            should_be_ok!(self.game.try_into(), "Invalid game: {}", self.game);
+        data[0x36 + extra_offset] = self.game as u8;
         data[0x37 + extra_offset] = self.language;
         if is_gen5 {
             data[0x3B] = should_be_some!(
@@ -369,7 +368,7 @@ impl GTSData {
         let trainer_class = data[0x34 + extra_offset];
         let is_exchanged = data[0x35 + extra_offset] != 0;
         let game = should_be_ok!(
-            Game::try_from(data[0x36 + extra_offset]),
+            data[0x36 + extra_offset].try_into(),
             "Invalid game: {}",
             data[0x36 + extra_offset]
         );

@@ -633,36 +633,36 @@ pub enum ShinyLeaf {
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum Game {
     /// Pokémon Sapphire.
-    Sapphire,
+    Sapphire = 1,
     /// Pokémon Ruby.
-    Ruby,
+    Ruby = 2,
     /// Pokémon Emerald.
-    Emerald,
+    Emerald = 3,
     /// Pokémon FireRed.
-    FireRed,
+    FireRed = 4,
     /// Pokémon LeafGreen.
-    LeafGreen,
+    LeafGreen = 5,
     /// Pokémon HeartGold.
-    HeartGold,
+    HeartGold = 7,
     /// Pokémon SoulSilver.
-    SoulSilver,
+    SoulSilver = 8,
     /// Pokémon Diamond.
     #[default]
-    Diamond,
+    Diamond = 10,
     /// Pokémon Pearl.
-    Pearl,
+    Pearl = 11,
     /// Pokémon Platinum.
-    Platinum,
+    Platinum = 12,
     /// Pokémon Colosseum or Pokémon XD.
-    ColosseumXD,
+    ColosseumXD = 15,
     /// Pokémon White.
-    White,
+    White = 20,
     /// Pokémon Black.
-    Black,
+    Black = 21,
     /// Pokémon White 2.
-    White2,
+    White2 = 22,
     /// Pokémon Black 2.
-    Black2,
+    Black2 = 23,
 }
 
 impl TryFrom<usize> for Game {
@@ -739,48 +739,6 @@ impl TryFrom<u8> for Game {
     /// `usize`.
     fn try_from(value: u8) -> Result<Self> {
         Self::try_from(value as usize)
-    }
-}
-
-impl TryInto<u8> for Game {
-    type Error = Error;
-
-    /// Converts a `Game` to a `usize` value.
-    ///
-    /// The conversion is the following:
-    /// * `Game::Sapphire` - `1`
-    /// * `Game::Ruby` - `2`
-    /// * `Game::Emerald` - `3`
-    /// * `Game::FireRed` - `4`
-    /// * `Game::LeafGreen` - `5`
-    /// * `Game::HeartGold` - `7`
-    /// * `Game::SoulSilver` - `8`
-    /// * `Game::Diamond` - `10`
-    /// * `Game::Pearl` - `11`
-    /// * `Game::Platinum` - `12`
-    /// * `Game::ColosseumXD` - `15`
-    /// * `Game::White` - `20`
-    /// * `Game::Black` - `21`
-    /// * `Game::White2` - `22`
-    /// * `Game::Black2` - `23`
-    fn try_into(self) -> Result<u8> {
-        match self {
-            Game::Sapphire => Ok(1),
-            Game::Ruby => Ok(2),
-            Game::Emerald => Ok(3),
-            Game::FireRed => Ok(4),
-            Game::LeafGreen => Ok(5),
-            Game::HeartGold => Ok(7),
-            Game::SoulSilver => Ok(8),
-            Game::Diamond => Ok(10),
-            Game::Pearl => Ok(11),
-            Game::Platinum => Ok(12),
-            Game::ColosseumXD => Ok(15),
-            Game::White => Ok(20),
-            Game::Black => Ok(21),
-            Game::White2 => Ok(22),
-            Game::Black2 => Ok(23),
-        }
     }
 }
 
