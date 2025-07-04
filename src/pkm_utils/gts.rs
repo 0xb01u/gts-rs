@@ -35,7 +35,7 @@ use crate::{
 /// Struct representing a location for a Pokémon in the GTS.
 ///
 /// A GTS location is composed of a country and a region.
-#[derive(Getters, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct Geonet {
     countries: Vec<String>,
     states: HashMap<String, Vec<String>>,
@@ -402,6 +402,7 @@ impl GTSData {
     }
 }
 
+#[allow(dead_code)]
 /// Struct representing a Pokémon deposit to the GTS.
 ///
 /// This struct is used to parse the data received by the GTS when a Pokémon is deposited.
@@ -409,7 +410,6 @@ impl GTSData {
 /// This struct is mainly useful to retrieve the Pokémon sent to the GTS via the `pokemon`
 /// function, after parsing the raw data received with the `from_base64` function.
 #[derive(Getters)]
-#[allow(dead_code)]
 pub struct GTSDeposit {
     gts_checksum: u32, // Unused field; kept for reference.
     profile_id: u32,   // Unused field; kept for reference.
