@@ -302,6 +302,7 @@ async fn search() -> HttpResponse {
 ///
 /// # Arguments
 /// * `$gen` - The generation number for which to generate the result endpoint function (4 or 5).
+#[rustfmt::skip] // Rust formatting messes up with this macro.
 macro_rules! result_endpoint {
     ($gen:literal) => {
         paste! {
@@ -329,7 +330,9 @@ macro_rules! result_endpoint {
                     path = path.trim().to_string();
 
                     // Remove quotes in the path:
-                    if (path.starts_with("'") && path.ends_with("'")) || path.starts_with("\"") && path.ends_with("\"") {
+                    if (path.starts_with("'") && path.ends_with("'"))
+                        || path.starts_with("\"") && path.ends_with("\"")
+                    {
                         path = path[1..path.len() - 1].to_string();
                     }
 
