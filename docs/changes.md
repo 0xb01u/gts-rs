@@ -10,10 +10,10 @@ It is important to note that the data types developed are not exhaustive of the 
 
 ## Changes to the Pokémon sent
 
-However, due to the changes in the data representation for Pokémon, the Pokémon data sent from this application to the games is not exactly the same as the one sent by the original Python script. More generally, deserialization and serialization of Pokémon data are not _exactly_ reverse operations.
+However, due to the changes in the data representation for Pokémon, the Pokémon data sent from this application to the games is not exactly the same as the one sent by the original Python script. More generally, deserialization and serialization of Pokémon data are not _exactly_ reciprocal operations.
 
-The main reasons for this is the following: The internal data representation presents certain discrepancies between games, that result in sort of reduncancies in the data. For example, Platinum having a different "Met Location" offset than Diamond and Pearl. Some of this redundant data is not included in the high-level representation, merging the redundancies into a single field.
+The main reason for this is the following: The internal data representation presents certain discrepancies between games, that result in sort of reduncancies in the data. For example, Platinum having a different "Met Location" offset than Diamond and Pearl. Some of this redundant data is not included in the high-level representation, merging the redundancies into a single struct field.
 
 Although initial testing suggest that the current implementation sends semantically equivalent Pokémon to the games (i.e., Pokémon that, even though internally different, are equivalent in all regards that matter for players), further testing is still needed with all the games to ensure that no meaningful information is lost, and that all legality checks are always passed.
 
-Additionally, some useless data (e.g., the mail message) is discarded altogether and zeroed-out when serializing the data; although it is usually non-zero in the games. Nevertheless, this is a very minor issue, as the games also discard that information when storing the Pokémon in boxes, and regenerate it when withdrawing them.
+Additionally, some useless data (e.g., the mail message) is discarded altogether and zeroed-out when serializing the data; although it is usually non-zero in the games. Nevertheless, this is a very minor issue, as the games also discard that information when storing Pokémon in boxes, and regenerate it when withdrawing them.
