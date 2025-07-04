@@ -58,9 +58,11 @@ const HGSS_FIRST_BALL: u8 = 0x11; // Fast Ball.
 #[rustfmt::skip]
 #[derive(Clone, Default, Debug, Getters, CopyGetters)]
 pub struct Pokemon {
-    /// Meta-data storing whether this Pokémon is of Generation 5, for convenience reasons.
-    #[get_copy = "pub"]
-    is_gen5: bool,
+    // Re-ordered these first two fields so that they are printed first debug-printing the Pokémon.
+    pub species: IdFeature,                 // 0x08 - 0x09
+    #[get = "pub"]
+    name: String,                           // 0x48 - 0x5D, 0x5E = null terminator(?)
+
     #[get_copy = "pub"]
     pid: u32,                               // 0x00 - 0x03
     #[get = "pub"]
@@ -68,7 +70,6 @@ pub struct Pokemon {
     pub encryption_bypass: bool,            // 0x04
     pub bad_egg_flag: bool,                 // 0x04
     original_checksum: u16,                 // 0x06 - 0x07
-    pub species: IdFeature,                 // 0x08 - 0x09
     pub held_item: IdFeature,               // 0x0A - 0x0B
     pub trainer_id: u16,                    // 0x0C - 0x0D
     pub trainer_secret_id: u16,             // 0x0E - 0x0F
@@ -96,8 +97,6 @@ pub struct Pokemon {
     pub shiny_leaves: HashSet<ShinyLeaf>,   // 0x41, only in gen 4 (HGSS)
     pub egg_location: u16,                  // 0x44 - 0x45 (Plat); 0x7E - 0x7F (DP)
     pub met_location: u16,                  // 0x46 - 0x47 (Plat); 0x80 - 0x81 (DP)
-    #[get = "pub"]
-    name: String,                           // 0x48 - 0x5D, 0x5E = null terminator(?)
     pub origin_game: Game,                  // 0x5F
     #[get = "pub"]
     trainer_name: String,                   // 0x68 - 0x77
@@ -123,6 +122,10 @@ pub struct Pokemon {
     //  * Mail message + OT Name (0x9C - 0xD3)
     //  * Unknown fields and flags (0x89, 0x8A - 0x8B)
     //  * [Gen 5] More unknown fields (0xD4 - 0xDB)
+
+    /// Meta-data storing whether this Pokémon is of Generation 5, for convenience reasons.
+    #[get_copy = "pub"]
+    is_gen5: bool,
 }
 
 impl Pokemon {
