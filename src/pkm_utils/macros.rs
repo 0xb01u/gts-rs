@@ -33,40 +33,6 @@ macro_rules! should_not_happen {
     };
 }
 
-#[cfg(debug_assertions)]
-/// Macro to indicate that certain function returning `Result` is expected to always succeed.
-///
-/// In debug builds, this is substituted to an `unwrap_or_else` call that calls
-/// `unreachable!` macro. That is, if the result is not the expected one, this
-/// macro panics with the given message.
-///
-/// In release builds, this is substituted to an `unwrap_or_else` call that calls
-/// an unsafe `unreachable_unchecked`. That is, if the result is not the expected one, this
-/// macro produces undefined behavior.
-#[macro_export]
-macro_rules! should_be_ok {
-    ($func:expr, $($msg:expr),*) => {
-        $func.unwrap_or_else(|_| { unreachable!($($msg),*) })
-    };
-}
-
-#[cfg(debug_assertions)]
-/// Macro to indicate that certain function returning `Option` is expected to always be something.
-///
-/// In debug builds, this is substituted to an `unwrap_or_else` call that calls
-/// `unreachable!` macro. That is, if the result is not the expected one, this
-/// macro panics with the given message.
-///
-/// In release builds, this is substituted to an `unwrap_or_else` call that calls
-/// an unsafe `unreachable_unchecked`. That is, if the result is not the expected one, this
-/// macro produces undefined behavior.
-#[macro_export]
-macro_rules! should_be_some {
-    ($func:expr, $($msg:expr),*) => {
-        $func.unwrap_or_else(|| { unreachable!($($msg),*) })
-    };
-}
-
 #[cfg(not(debug_assertions))]
 /// Macro to indicate that certain code is intended to never be execute in any circumstances.
 ///
@@ -79,8 +45,11 @@ macro_rules! should_not_happen {
     };
 }
 
-#[cfg(not(debug_assertions))]
 /// Macro to indicate that certain function returning `Result` is expected to always succeed.
+///
+/// In debug builds, this is substituted to an `unwrap_or_else` call that calls
+/// `unreachable!` macro. That is, if the result is not the expected one, this
+/// macro panics with the given message.
 ///
 /// In release builds, this is substituted to an `unwrap_or_else` call that calls
 /// an unsafe `unreachable_unchecked`. That is, if the result is not the expected one, this
@@ -88,12 +57,15 @@ macro_rules! should_not_happen {
 #[macro_export]
 macro_rules! should_be_ok {
     ($func:expr, $($msg:expr),*) => {
-        $func.unwrap_or_else(|_| unsafe { std::hint::unreachable_unchecked() })
+        $func.unwrap_or_else(|_| { crate::should_not_happen!($($msg),*) })
     };
 }
 
-#[cfg(not(debug_assertions))]
 /// Macro to indicate that certain function returning `Option` is expected to always be something.
+///
+/// In debug builds, this is substituted to an `unwrap_or_else` call that calls
+/// `unreachable!` macro. That is, if the result is not the expected one, this
+/// macro panics with the given message.
 ///
 /// In release builds, this is substituted to an `unwrap_or_else` call that calls
 /// an unsafe `unreachable_unchecked`. That is, if the result is not the expected one, this
@@ -101,6 +73,6 @@ macro_rules! should_be_ok {
 #[macro_export]
 macro_rules! should_be_some {
     ($func:expr, $($msg:expr),*) => {
-        $func.unwrap_or_else(|| unsafe { std::hint::unreachable_unchecked() })
+        $func.unwrap_or_else(|| { crate::should_not_happen!($($msg),*) })
     };
 }
