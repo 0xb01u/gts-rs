@@ -258,9 +258,6 @@ impl GTSData {
             );
         }
 
-        //data[54] = 1;
-        data[55] = 1;
-
         data
     }
 
