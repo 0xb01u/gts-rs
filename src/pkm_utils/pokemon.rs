@@ -58,7 +58,8 @@ const HGSS_FIRST_BALL: u8 = 0x11; // Fast Ball.
 #[rustfmt::skip]
 #[derive(Clone, Default, Debug, Getters, CopyGetters)]
 pub struct Pokemon {
-    // Re-ordered these first two fields so that they are printed first debug-printing the Pokémon.
+    // Re-ordered these first two fields so that they are printed first when debug-printing the
+    // Pokémon.
     pub species: IdFeature,                 // 0x08 - 0x09
     #[get = "pub"]
     name: String,                           // 0x48 - 0x5D, 0x5E = null terminator(?)
@@ -123,6 +124,8 @@ pub struct Pokemon {
     //  * Unknown fields and flags (0x89, 0x8A - 0x8B)
     //  * [Gen 5] More unknown fields (0xD4 - 0xDB)
 
+    /// Meta-data storing whether this Pokémon is shiny, for printing purposes.
+    is_shiny: bool,
     /// Meta-data storing whether this Pokémon is of Generation 5, for convenience reasons.
     #[get_copy = "pub"]
     is_gen5: bool,
@@ -143,6 +146,9 @@ impl Pokemon {
             "Invalid nature derived from PID: {}",
             pid
         );
+
+        // Update shininess status:
+        self.is_shiny = self.is_shiny();
     }
 
     /// Sets the nature for the Pokémon.
@@ -153,8 +159,12 @@ impl Pokemon {
     pub fn set_nature(&mut self, nature: Nature) {
         // Set the nature:
         self.nature = nature;
+
         // Update the PID to reflect the new nature:
         self.pid = self.pid.wrapping_sub(self.nature.id_and_name.id() as u32);
+
+        // Update shininess status:
+        self.is_shiny = self.is_shiny();
     }
 
     /// Sets the experience points of the Pokémon.
@@ -1235,7 +1245,8 @@ impl Pokemon {
 
         // Generate save file name:
         let current_time_str = LocalTime::now().format("%Y-%m-%d_%H-%M-%S").to_string();
-        let base_name = format!("{}_{}", self.species.name(), self.name);
+        let shiny_mark = if self.is_shiny() { "!" } else { "" };
+        let base_name = format!("{}_{}{}", self.species.name(), self.name, shiny_mark);
 
         // Generate the binary data to save:
         let data = self.serialize();
