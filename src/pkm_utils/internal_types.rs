@@ -18,8 +18,9 @@
  */
 use crate::{data_maps::*, should_be_ok, should_not_happen};
 use getset::{CopyGetters, Getters};
+use num_enum::TryFromPrimitive;
 use std::{
-    convert::{TryFrom, TryInto},
+    convert::TryFrom,
     fmt::{Display, Formatter, Result as FmtResult},
     io::{Error, ErrorKind, Result},
 };
@@ -280,54 +281,6 @@ impl Stat {
     }
 }
 
-impl TryFrom<usize> for Stat {
-    type Error = Error;
-
-    /// Converts a `usize` value to a `Stat`.
-    ///
-    /// The conversion is the following:
-    /// * `0` - `Stat::Hp`
-    /// * `1` - `Stat::Atk`
-    /// * `2` - `Stat::Def`
-    /// * `3` - `Stat::SpA`
-    /// * `4` - `Stat::SpD`
-    /// * `5` - `Stat::Spe`
-    /// * Any other value - `Err(Error::InvalidData)`
-    fn try_from(value: usize) -> Result<Self> {
-        match value {
-            0 => Ok(Stat::Hp),
-            1 => Ok(Stat::Atk),
-            2 => Ok(Stat::Def),
-            3 => Ok(Stat::SpA),
-            4 => Ok(Stat::SpD),
-            5 => Ok(Stat::Spe),
-
-            _ => Err(Error::new(ErrorKind::InvalidData, "Invalid stat value")),
-        }
-    }
-}
-
-impl TryFrom<u8> for Stat {
-    type Error = Error;
-
-    /// Converts a `u8` value to a `Stat`.
-    ///
-    /// The conversion is the following:
-    /// * `0` - `Stat::Hp`
-    /// * `1` - `Stat::Atk`
-    /// * `2` - `Stat::Def`
-    /// * `3` - `Stat::SpA`
-    /// * `4` - `Stat::SpD`
-    /// * `5` - `Stat::Spe`
-    /// * Any other value - `Err(Error::InvalidData)`
-    ///
-    /// Internally, this function just calls `Stat::try_from::<usize>` with the value cast to
-    /// `usize` type.
-    fn try_from(value: u8) -> Result<Self> {
-        Stat::try_from(value as usize)
-    }
-}
-
 /// Structure that represents a Pokémon nature.
 ///
 /// Natures have name and ID. Each nature increases one stat by 10% and decreases another by 10%.
@@ -467,131 +420,19 @@ pub enum ContestStat {
     Sheen,
 }
 
-impl TryFrom<usize> for ContestStat {
-    type Error = Error;
-
-    /// Converts a `usize` value to a `ContestStat`.
-    ///
-    /// The conversion is the following:
-    /// * `0` - `ContestStat::Cool`
-    /// * `1` - `ContestStat::Beauty`
-    /// * `2` - `ContestStat::Cute`
-    /// * `3` - `ContestStat::Smart`
-    /// * `4` - `ContestStat::Tough`
-    /// * `5` - `ContestStat::Sheen`
-    /// * Any other value - `Err(Error::InvalidData)`
-    fn try_from(value: usize) -> Result<Self> {
-        match value {
-            0 => Ok(ContestStat::Cool),
-            1 => Ok(ContestStat::Beauty),
-            2 => Ok(ContestStat::Cute),
-            3 => Ok(ContestStat::Smart),
-            4 => Ok(ContestStat::Tough),
-            5 => Ok(ContestStat::Sheen),
-
-            _ => Err(Error::new(
-                ErrorKind::InvalidData,
-                "Invalid contest stat value",
-            )),
-        }
-    }
-}
-
-impl TryFrom<u8> for ContestStat {
-    type Error = Error;
-
-    /// Converts a `u8` value to a `ContestStat`.
-    ///
-    /// The conversion is the following:
-    /// * `0` - `ContestStat::Cool`
-    /// * `1` - `ContestStat::Beauty`
-    /// * `2` - `ContestStat::Cute`
-    /// * `3` - `ContestStat::Smart`
-    /// * `4` - `ContestStat::Tough`
-    /// * `5` - `ContestStat::Sheen`
-    /// * Any other value - `Err(Error::InvalidData)`
-    ///
-    /// Internally, this function just calls `ContestStat::try_from::<usize>` with the value cast
-    /// to `usize`.
-    fn try_from(value: u8) -> Result<Self> {
-        ContestStat::try_from(value as usize)
-    }
-}
-
-impl TryInto<usize> for ContestStat {
-    type Error = Error;
-
-    /// Converts a `ContestStat` to a `usize` value.
-    ///
-    /// The conversion is the following:
-    /// * `ContestStat::Cool` - `0`
-    /// * `ContestStat::Beauty` - `1`
-    /// * `ContestStat::Cute` - `2`
-    /// * `ContestStat::Smart` - `3`
-    /// * `ContestStat::Tough` - `4`
-    /// * `ContestStat::Sheen` - `5`
-    fn try_into(self) -> Result<usize> {
-        match self {
-            ContestStat::Cool => Ok(0),
-            ContestStat::Beauty => Ok(1),
-            ContestStat::Cute => Ok(2),
-            ContestStat::Smart => Ok(3),
-            ContestStat::Tough => Ok(4),
-            ContestStat::Sheen => Ok(5),
-        }
-    }
-}
-
 /// Enum the represent the different Pokémon and trainer genders.
 ///
 /// A trainer cannot be genderless.
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, TryFromPrimitive)]
+#[repr(u8)]
 pub enum Gender {
     /// Male gender.
-    Male,
+    Male, // 0x0
     /// Female gender.
-    Female,
+    Female, // 0x1
     /// Genderless, only for certain special Pokémon.
     #[default]
-    Genderless,
-}
-
-impl TryFrom<usize> for Gender {
-    type Error = Error;
-
-    /// Converts a `usize` value to a `Gender`.
-    ///
-    /// The conversion is the following:
-    /// * `0x0` - `Gender::Male`
-    /// * `0x1` - `Gender::Female`
-    /// * `0x2` - `Gender::Genderless`
-    /// * Any other value - `Err(Error::InvalidData)`
-    fn try_from(value: usize) -> Result<Self> {
-        match value {
-            0x0 => Ok(Gender::Male),
-            0x1 => Ok(Gender::Female),
-            0x2 => Ok(Gender::Genderless),
-
-            _ => Err(Error::new(ErrorKind::InvalidData, "Invalid stat value")),
-        }
-    }
-}
-
-impl TryFrom<u8> for Gender {
-    type Error = Error;
-
-    /// Converts a `usize` value to a `Gender`.
-    ///
-    /// The conversion is the following:
-    /// * `0x0` - `Gender::Male`
-    /// * `0x1` - `Gender::Female`
-    /// * `0x2` - `Gender::Genderless`
-    /// * Any other value - `Err(Error::InvalidData)`
-    ///
-    /// Internally, this function just calls `Gender::try_from::<usize>` with the value cast to
-    fn try_from(value: u8) -> Result<Self> {
-        Self::try_from(value as usize)
-    }
+    Genderless, // 0x2
 }
 
 impl Display for Gender {
@@ -630,7 +471,8 @@ pub enum ShinyLeaf {
 }
 
 /// Enum that identifies the different games a Pokémon can originate from.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, TryFromPrimitive)]
+#[repr(u8)]
 pub enum Game {
     /// Pokémon Sapphire.
     Sapphire = 1,
@@ -663,83 +505,6 @@ pub enum Game {
     White2 = 22,
     /// Pokémon Black 2.
     Black2 = 23,
-}
-
-impl TryFrom<usize> for Game {
-    type Error = Error;
-
-    /// Converts a `usize` value to a `Game`.
-    ///
-    /// The conversion is the following:
-    /// * `1` - `Game::Sapphire`
-    /// * `2` - `Game::Ruby`
-    /// * `3` - `Game::Emerald`
-    /// * `4` - `Game::FireRed`
-    /// * `5` - `Game::LeafGreen`
-    /// * `7` - `Game::HeartGold`
-    /// * `8` - `Game::SoulSilver`
-    /// * `10` - `Game::Diamond`
-    /// * `11` - `Game::Pearl`
-    /// * `12` - `Game::Platinum`
-    /// * `15` - `Game::ColosseumXD`
-    /// * `20` - `Game::White`
-    /// * `21` - `Game::Black`
-    /// * `22` - `Game::White2`
-    /// * `23` - `Game::Black2`
-    ///
-    /// Any other value will return an error.
-    fn try_from(value: usize) -> Result<Self> {
-        match value {
-            1 => Ok(Game::Sapphire),
-            2 => Ok(Game::Ruby),
-            3 => Ok(Game::Emerald),
-            4 => Ok(Game::FireRed),
-            5 => Ok(Game::LeafGreen),
-            7 => Ok(Game::HeartGold),
-            8 => Ok(Game::SoulSilver),
-            10 => Ok(Game::Diamond),
-            11 => Ok(Game::Pearl),
-            12 => Ok(Game::Platinum),
-            15 => Ok(Game::ColosseumXD),
-            20 => Ok(Game::White),
-            21 => Ok(Game::Black),
-            22 => Ok(Game::White2),
-            23 => Ok(Game::Black2),
-
-            _ => Err(Error::new(ErrorKind::InvalidData, "Invalid game value")),
-        }
-    }
-}
-
-impl TryFrom<u8> for Game {
-    type Error = Error;
-
-    /// Converts a `u8` value to a `Game`.
-    ///
-    /// The conversion is the following:
-    /// * `1` - `Game::Sapphire`
-    /// * `2` - `Game::Ruby`
-    /// * `3` - `Game::Emerald`
-    /// * `4` - `Game::FireRed`
-    /// * `5` - `Game::LeafGreen`
-    /// * `7` - `Game::HeartGold`
-    /// * `8` - `Game::SoulSilver`
-    /// * `10` - `Game::Diamond`
-    /// * `11` - `Game::Pearl`
-    /// * `12` - `Game::Platinum`
-    /// * `15` - `Game::ColosseumXD`
-    /// * `20` - `Game::White`
-    /// * `21` - `Game::Black`
-    /// * `22` - `Game::White2`
-    /// * `23` - `Game::Black2`
-    ///
-    /// Any other value will return an error.
-    ///
-    /// Internally, this function just calls `Game::try_from::<usize>` with the value cast to
-    /// `usize`.
-    fn try_from(value: u8) -> Result<Self> {
-        Self::try_from(value as usize)
-    }
 }
 
 impl TryFrom<&String> for Game {
