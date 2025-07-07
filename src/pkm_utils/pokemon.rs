@@ -33,12 +33,8 @@ const BOXED_PKM_LEN: usize = 0x88;
 const GEN4_PKM_LEN: usize = 0xEC;
 const GEN5_PKM_LEN: usize = 0xDC;
 
-// Constants related to game discrepancies:
-// https://bulbapedia.bulbagarden.net/wiki/List_of_locations_by_index_number_in_Generation_IV
-const GEN4_FARAWAY_PLACE: u16 = 0x0BBA;
-const DP_LAST_LOCATION: u16 = 0x006F; // Battle park.
-const POKE_BALL: u8 = 0x04;
-const HGSS_FIRST_BALL: u8 = 0x11; // Fast Ball.
+pub const POKE_BALL: u8 = 0x04;
+pub const HGSS_FIRST_BALL: u8 = 0x11; // Fast Ball.
 
 // Gen 4 Pokémon structure documentation: https://projectpokemon.org/docs/gen-4/pkm-structure-r65/
 // Gen 5 Pokémon structure documentation: https://projectpokemon.org/home/docs/gen-5/bw-save-structure-r60/
@@ -96,8 +92,8 @@ pub struct Pokemon {
     pub gender: Gender,                     // 0x40, bits 1-2
     pub form_id: u8,                        // 0x40, bits 3-6
     pub shiny_leaves: HashSet<ShinyLeaf>,   // 0x41, only in gen 4 (HGSS)
-    pub egg_location: u16,                  // 0x44 - 0x45 (Plat); 0x7E - 0x7F (DP)
-    pub met_location: u16,                  // 0x46 - 0x47 (Plat); 0x80 - 0x81 (DP)
+    pub egg_location: Location,             // 0x44 - 0x45 (Plat); 0x7E - 0x7F (DP)
+    pub met_location: Location,             // 0x46 - 0x47 (Plat); 0x80 - 0x81 (DP)
     pub origin_game: Game,                  // 0x5F
     #[get = "pub"]
     trainer_name: String,                   // 0x68 - 0x77
@@ -577,8 +573,10 @@ impl Pokemon {
             bytes[0x41] = self.nature.id_and_name.id() as u8;
         }
         if !self.is_gen5 {
-            bytes[0x44..0x46].copy_from_slice(&self.egg_location.to_le_bytes());
-            bytes[0x46..0x48].copy_from_slice(&self.met_location.to_le_bytes());
+            let egg_location: u16 = self.egg_location.into();
+            bytes[0x44..0x46].copy_from_slice(&egg_location.to_le_bytes());
+            let met_location: u16 = self.met_location.into();
+            bytes[0x46..0x48].copy_from_slice(&met_location.to_le_bytes());
         }
         // Block C: 0x48 - 0x68
         if !self.is_gen5 {
@@ -627,21 +625,39 @@ impl Pokemon {
             // Handle location particularities of Diamond and Pearl:
             // TODO: Check in-game representation of corner cases, e.g. Distortion World, Battle
             // Frontier, and HGSS locations.
-            let dp_egg_location = if self.egg_location <= DP_LAST_LOCATION {
-                self.egg_location
-            } else {
-                GEN4_FARAWAY_PLACE
+
+            let egg_location = match self.egg_location {
+                Location::Gen4(loc) => loc,
+                _ => should_not_happen!(
+                    "Egg location for Gen 4 Pokémon is not a Gen 4 location: {:?}",
+                    self.egg_location
+                ),
             };
-            let dp_met_location = if self.met_location <= DP_LAST_LOCATION {
-                self.met_location
-            } else {
-                GEN4_FARAWAY_PLACE
+            let met_location = match self.met_location {
+                Location::Gen4(loc) => loc,
+                _ => should_not_happen!(
+                    "Met location for Gen 4 Pokémon is not a Gen 4 location: {:?}",
+                    self.met_location
+                ),
             };
-            bytes[0x7E..0x80].copy_from_slice(&dp_egg_location.to_le_bytes());
-            bytes[0x80..0x82].copy_from_slice(&dp_met_location.to_le_bytes());
+            let dp_egg_location = if egg_location <= Gen4Location::DP_LAST_LOCATION {
+                egg_location
+            } else {
+                Gen4Location::FarawayPlace
+            };
+            let dp_met_location = if met_location <= Gen4Location::DP_LAST_LOCATION {
+                met_location
+            } else {
+                Gen4Location::FarawayPlace
+            };
+
+            bytes[0x7E..0x80].copy_from_slice(&(dp_egg_location as u16).to_le_bytes());
+            bytes[0x80..0x82].copy_from_slice(&(dp_met_location as u16).to_le_bytes());
         } else {
-            bytes[0x7E..0x80].copy_from_slice(&self.egg_location.to_le_bytes());
-            bytes[0x80..0x82].copy_from_slice(&self.met_location.to_le_bytes());
+            let egg_location: u16 = self.egg_location.into();
+            bytes[0x7E..0x80].copy_from_slice(&egg_location.to_le_bytes());
+            let met_location: u16 = self.met_location.into();
+            bytes[0x80..0x82].copy_from_slice(&met_location.to_le_bytes());
         }
         bytes[0x82] = self.pokerus;
         // Handle HGSS ball particularities:
@@ -843,19 +859,59 @@ impl Pokemon {
                 bytes[0x41]
             );
         }
-        let egg_location_plat = u16::from_le_bytes([bytes[0x44], bytes[0x45]]);
-        let egg_location_others = u16::from_le_bytes([bytes[0x7E], bytes[0x7F]]);
-        pkm.egg_location = if egg_location_plat != 0 {
-            egg_location_plat
+        // Transform egg location to correct enum type:
+        let egg_loc_plathgss = u16::from_le_bytes([bytes[0x44], bytes[0x45]]);
+        let egg_loc_others = u16::from_le_bytes([bytes[0x7E], bytes[0x7F]]);
+
+        pkm.egg_location = if egg_loc_plathgss != 0 {
+            // If the Plat/HG/SS egg loc offset is non-zero, this is always a Gen 4 location.
+            Location::Gen4(should_be_ok!(
+                Gen4Location::try_from(egg_loc_plathgss),
+                "Invalid egg location ID: {}",
+                egg_loc_plathgss
+            ))
         } else {
-            egg_location_others
+            // If the Plat/HG/SS egg location offset is zero, this can be a Gen 4 or Gen 5 location.
+            if !pkm.is_gen5 {
+                Location::Gen4(should_be_ok!(
+                    Gen4Location::try_from(egg_loc_others),
+                    "Invalid egg location ID: {}",
+                    egg_loc_others
+                ))
+            } else {
+                Location::Gen5(should_be_ok!(
+                    Gen5Location::try_from(egg_loc_others),
+                    "Invalid egg location ID: {}",
+                    egg_loc_others
+                ))
+            }
         };
-        let met_location_plat = u16::from_le_bytes([bytes[0x46], bytes[0x47]]);
-        let met_location_others = u16::from_le_bytes([bytes[0x80], bytes[0x81]]);
-        pkm.met_location = if met_location_plat != 0 {
-            met_location_plat
+        // Transform met location to correct enum type:
+        let met_loc_plathgss = u16::from_le_bytes([bytes[0x46], bytes[0x47]]);
+        let met_loc_others = u16::from_le_bytes([bytes[0x80], bytes[0x81]]);
+
+        pkm.met_location = if met_loc_plathgss != 0 {
+            // If the Plat/HG/SS met location offset is non-zero, this is always a Gen 4 location.
+            Location::Gen4(should_be_ok!(
+                Gen4Location::try_from(met_loc_plathgss),
+                "Invalid met location ID: {}",
+                met_loc_plathgss
+            ))
         } else {
-            met_location_others
+            // If the Plat/HG/SS met location offset is zero, this can be a Gen 4 or Gen 5 location.
+            if !pkm.is_gen5 {
+                Location::Gen4(should_be_ok!(
+                    Gen4Location::try_from(met_loc_others),
+                    "Invalid met location ID: {}",
+                    met_loc_others
+                ))
+            } else {
+                Location::Gen5(should_be_ok!(
+                    Gen5Location::try_from(met_loc_others),
+                    "Invalid met location ID: {}",
+                    met_loc_others
+                ))
+            }
         };
         // Block C: 0x48 - 0x68
         if !pkm.is_gen5 {
