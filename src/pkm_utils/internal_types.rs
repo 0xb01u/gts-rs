@@ -205,6 +205,15 @@ impl IdFeature {
     }
 }
 
+impl std::fmt::Display for IdFeature {
+    /// Formats the `IdFeature` as a printed string.
+    ///
+    /// The printing format is: `<self.name> (id: <self.id>)`.
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} (id: {})", self.name, self.id)
+    }
+}
+
 /// Structure that reprensents a Pokémon feature that affects all its stats.
 ///
 /// This includes EVs, IVs, and base stats.
