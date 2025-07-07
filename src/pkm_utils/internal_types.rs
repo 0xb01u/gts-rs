@@ -19,10 +19,7 @@
 use crate::{data_maps::*, should_be_ok, should_not_happen};
 use getset::{CopyGetters, Getters};
 use num_enum::TryFromPrimitive;
-use std::{
-    convert::TryFrom,
-    io::{Error, ErrorKind, Result},
-};
+use std::io::{Error, ErrorKind, Result};
 use strum::Display;
 
 /// Structure that represent a Pokémon feature that can be identified by a name and an ID.
@@ -489,52 +486,6 @@ pub enum Game {
     White2 = 22,
     /// Pokémon Black 2.
     Black2 = 23,
-}
-
-impl TryFrom<&String> for Game {
-    type Error = Error;
-
-    /// Converts a `String` value to a `Game`.
-    ///
-    /// The conversion is the following:
-    /// * `"Sapphire"` - `Game::Sapphire`
-    /// * `"Ruby"` - `Game::Ruby`
-    /// * `"Emerald"` - `Game::Emerald`
-    /// * `"FireRed"` - `Game::FireRed`
-    /// * `"LeafGreen"` - `Game::LeafGreen`
-    /// * `"HeartGold"` - `Game::HeartGold`
-    /// * `"SoulSilver"` - `Game::SoulSilver`
-    /// * `"Diamond"` - `Game::Diamond`
-    /// * `"Pearl"` - `Game::Pearl`
-    /// * `"Platinum"` - `Game::Platinum`
-    /// * `"ColosseumXD"` - `Game::ColosseumXD`
-    /// * `"White"` - `Game::White`
-    /// * `"Black"` - `Game::Black`
-    /// * `"White2"` - `Game::White2`
-    /// * `"Black2"` - `Game::Black2`
-    ///
-    /// Any other value will return an error.
-    fn try_from(value: &String) -> Result<Self> {
-        match value.as_str() {
-            "Sapphire" => Ok(Game::Sapphire),
-            "Ruby" => Ok(Game::Ruby),
-            "Emerald" => Ok(Game::Emerald),
-            "FireRed" => Ok(Game::FireRed),
-            "LeafGreen" => Ok(Game::LeafGreen),
-            "HeartGold" => Ok(Game::HeartGold),
-            "SoulSilver" => Ok(Game::SoulSilver),
-            "Diamond" => Ok(Game::Diamond),
-            "Pearl" => Ok(Game::Pearl),
-            "Platinum" => Ok(Game::Platinum),
-            "ColosseumXD" => Ok(Game::ColosseumXD),
-            "White" => Ok(Game::White),
-            "Black" => Ok(Game::Black),
-            "White 2" => Ok(Game::White2),
-            "Black 2" => Ok(Game::Black2),
-
-            _ => Err(Error::new(ErrorKind::InvalidData, "Invalid game name")),
-        }
-    }
 }
 
 /// Enum that identifies the different Gen 4 and Gen 5 Poké Balls.
