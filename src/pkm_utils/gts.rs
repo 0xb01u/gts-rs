@@ -102,7 +102,7 @@ pub struct GTSData {
     trainer_class: u8,
     is_exchanged: bool, // Always `false` for deposits, `true` for receptions.
     game: Game,
-    language: u8,
+    language: Language,
     unity_tower_floors: Option<u8>, // Only present in Gen 5.
 }
 
@@ -250,7 +250,7 @@ impl GTSData {
         data[0x34 + extra_offset] = self.trainer_class;
         data[0x35 + extra_offset] = if self.is_exchanged { 1 } else { 0 };
         data[0x36 + extra_offset] = self.game as u8;
-        data[0x37 + extra_offset] = self.language;
+        data[0x37 + extra_offset] = self.language as u8;
         if is_gen5 {
             data[0x3B] = should_be_some!(
                 self.unity_tower_floors,
@@ -366,10 +366,14 @@ impl GTSData {
         let is_exchanged = data[0x35 + extra_offset] != 0;
         let game = should_be_ok!(
             data[0x36 + extra_offset].try_into(),
-            "Invalid game: {}",
+            "Invalid game ID: {}",
             data[0x36 + extra_offset]
         );
-        let language = data[0x37 + extra_offset];
+        let language = should_be_ok!(
+            Language::try_from(data[0x37 + extra_offset]),
+            "Invalid language ID: {}",
+            data[0x37 + extra_offset]
+        );
         let unity_tower_floors = if is_gen5 { Some(data[0x3B]) } else { None };
 
         Self {

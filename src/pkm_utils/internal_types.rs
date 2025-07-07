@@ -1879,3 +1879,24 @@ impl Into<u16> for Location {
         }
     }
 }
+
+/// Enum identifying the different languages in the Gen 4 and Gen 5 games.
+#[derive(Clone, Copy, Debug, Default, Display, TryFromPrimitive)]
+#[repr(u8)]
+pub enum Language {
+    /// Japanese.
+    Japanese = 0x01,
+    /// English.
+    #[default]
+    English,
+    /// French.
+    French,
+    /// Italian.
+    Italian,
+    /// German.
+    German,
+    /// Spanish.
+    Spanish = 0x07,
+    /// Korean.
+    Korean,
+}

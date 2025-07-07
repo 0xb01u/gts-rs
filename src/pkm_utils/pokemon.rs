@@ -73,7 +73,7 @@ pub struct Pokemon {
     pub friendship: u8,                     // 0x14
     pub ability: IdFeature,                 // 0x15
     pub markings: u8,                       // 0x16
-    pub language: u8,                       // 0x17
+    pub language: Language,                 // 0x17
     pub evs: StatsFeature,                  // 0x18 - 0x1D
     pub contest_stats: ContestStatsFeature, // 0x1E - 0x23
     pub sinnoh_ribbons: [u8; 8],            // 0x24 - 0x28, and 0x60 - 0x64
@@ -502,7 +502,7 @@ impl Pokemon {
         bytes[0x14] = self.friendship;
         bytes[0x15] = self.ability.id() as u8;
         bytes[0x16] = self.markings;
-        bytes[0x17] = self.language;
+        bytes[0x17] = self.language as u8;
         bytes[0x18..0x1E].copy_from_slice(&[
             self.evs.hp as u8,
             self.evs.atk as u8,
@@ -757,7 +757,11 @@ impl Pokemon {
             bytes[0x15]
         );
         pkm.markings = bytes[0x16];
-        pkm.language = bytes[0x17];
+        pkm.language = should_be_ok!(
+            Language::try_from(bytes[0x17]),
+            "Invalid language ID: {}",
+            bytes[0x17]
+        );
         pkm.evs = StatsFeature {
             hp: bytes[0x18] as u16,
             atk: bytes[0x19] as u16,
