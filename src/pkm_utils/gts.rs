@@ -99,7 +99,7 @@ pub struct GTSData {
     trainer_name: String,           // Goes before the trainer ID in Gen 4.
     country: String,
     region: String,
-    trainer_class: u8,
+    trainer_class: TrainerClass,
     is_exchanged: bool, // Always `false` for deposits, `true` for receptions.
     game: Game,
     language: Language,
@@ -153,7 +153,12 @@ impl GTSData {
             // Information on real-world locations extracted from:
             // https://bulbapedia.bulbagarden.net/wiki/Pok%C3%A9mon_world_in_relation_to_the_real_world
         };
-        let trainer_class = ((trainer_id ^ pokemon.trainer_secret_id) & 0xf) as u8;
+        let trainer_class = should_be_ok!(
+            TrainerClass::try_from(
+                ((trainer_id ^ pokemon.trainer_secret_id) as u8) % TrainerClass::COUNT
+            ),
+            "Tried to create a Trainer Class with an invalid ID"
+        );
         let is_exchanged = true;
         let language = pokemon.language;
         let unity_tower_floors = if pokemon.is_gen5() { Some(0) } else { None };

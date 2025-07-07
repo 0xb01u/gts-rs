@@ -1900,3 +1900,46 @@ pub enum Language {
     /// Korean.
     Korean,
 }
+
+/// Enum identifying the Trainer Class / sprite of GTS deposits in Generation 5.
+#[derive(Clone, Copy, Debug, Default, Display, TryFromPrimitive)]
+#[repr(u8)]
+pub enum TrainerClass {
+    /// Youngster.
+    #[default]
+    Youngster,
+    /// Ace Trainer (male).
+    MaleAceTrainer,
+    /// Pokémon Ranger (male).
+    MalePokemonRanger,
+    /// Pokémon Breeder (male).
+    MalePokemonBreeder,
+    /// Researcher (male).
+    MaleResearcher,
+    /// Hiker.
+    Hiker,
+    /// Skinhead.
+    Skinhead,
+    /// Day-Care student (male).
+    MaleDayCareStudent,
+    /// Lass.
+    Lass,
+    /// Ace Trainer (female).
+    FemaleAceTrainer,
+    /// Pokémon Ranger (female).
+    FemalePokemonRanger,
+    /// Pokémon Breeder (female).
+    FemalePokemonBreeder,
+    /// Researcher (female).
+    FemaleResearcher,
+    /// Parasol Lady.
+    ParasolLady,
+    /// Nurse.
+    Nurse,
+    /// Day-Care student (female).
+    FemaleDayCareStudent,
+}
+
+impl TrainerClass {
+    pub const COUNT: u8 = (Self::FemaleDayCareStudent as u8 + 1);
+}
