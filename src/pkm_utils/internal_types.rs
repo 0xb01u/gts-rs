@@ -537,6 +537,69 @@ impl TryFrom<&String> for Game {
     }
 }
 
+/// Enum that identifies the different Gen 4 and Gen 5 Poké Balls.
+#[derive(
+    Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Display, TryFromPrimitive,
+)]
+#[repr(u8)]
+pub enum Pokeball {
+    /// Master Ball.
+    MasterBall = 0x01,
+    /// Ultra Ball.
+    UltraBall,
+    /// Great Ball.
+    GreatBall,
+    /// Poké Ball.
+    #[default]
+    PokeBall,
+    /// Safari Ball.
+    SafariBall,
+    /// Net Ball.
+    NetBall,
+    /// Dive Ball.
+    DiveBall,
+    /// Nest Ball.
+    NestBall,
+    /// Repeat Ball.
+    RepeatBall,
+    /// Timer Ball.
+    TimerBall,
+    /// Luxury Ball.
+    LuxuryBall,
+    /// Premier Ball.
+    PremierBall,
+    /// Dusk Ball.
+    DuskBall,
+    /// Heal Ball.
+    HealBall,
+    /// Quick Ball.
+    QuickBall,
+    /// Cherish Ball.
+    CherishBall,
+    /// Fast Ball.
+    FastBall,
+    /// Level Ball.
+    LevelBall,
+    /// Lure Ball.
+    LureBall,
+    /// Heavy Ball.
+    HeavyBall,
+    /// Love Ball.
+    LoveBall,
+    /// Friend Ball.
+    FriendBall,
+    /// Moon Ball.
+    MoonBall,
+    /// Sport Ball.
+    SportBall,
+    /// Dream Ball.
+    DreamBall,
+}
+
+impl Pokeball {
+    pub const FIRST_HGSS_BALL: Self = Pokeball::FastBall;
+}
+
 // List of Gen 4 locations:
 // https://bulbapedia.bulbagarden.net/wiki/List_of_locations_by_index_number_in_Generation_IV
 /// Enum that identifies the different Gen 4 locations.

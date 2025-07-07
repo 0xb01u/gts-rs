@@ -33,9 +33,6 @@ const BOXED_PKM_LEN: usize = 0x88;
 const GEN4_PKM_LEN: usize = 0xEC;
 const GEN5_PKM_LEN: usize = 0xDC;
 
-pub const POKE_BALL: u8 = 0x04;
-pub const HGSS_FIRST_BALL: u8 = 0x11; // Fast Ball.
-
 // Gen 4 Pokémon structure documentation: https://projectpokemon.org/docs/gen-4/pkm-structure-r65/
 // Gen 5 Pokémon structure documentation: https://projectpokemon.org/home/docs/gen-5/bw-save-structure-r60/
 /// Structure representing a Generation 4 or Generation 5 Pokémon.
@@ -45,9 +42,8 @@ pub const HGSS_FIRST_BALL: u8 = 0x11; // Fast Ball.
 /// `trainer_name`), which are stored as `String`.
 ///
 /// Other fields, however, are kept stored as their internal raw byte representation, and thus are
-/// devoid of their semantical meaning. For example, the Poké Ball in which are stored (field
-/// `ball`), which is of `u8` type. The reason behind this is just convenience for this
-/// application.
+/// devoid of their semantical meaning. For example, the Pokémon form (`form_id`), which is of
+/// `u8` type. The reason behind this is just convenience for this application.
 ///
 /// All fields which can be safely modified have public visibility. Other fields, whose
 /// modification would alter other data in the Pokémon, are accessible through getters and setters.
@@ -100,7 +96,7 @@ pub struct Pokemon {
     pub egg_date: Option<NaiveDate>,        // 0x78 - 0x7A
     pub met_date: NaiveDate,                // 0x7B - 0x7D
     pub pokerus: u8,                        // 0x82
-    pub ball: u8,                           // 0x83 (redundant in 0x86 in HGSS)
+    pub ball: Pokeball,                     // 0x83 (redundant in 0x86 in HGSS)
     pub met_level: u8,                      // 0x84, bits 0-6
     pub trainer_gender: Gender,             // 0x84, bit 7
     pub encounter_type: u8,                 // 0x85
@@ -661,14 +657,14 @@ impl Pokemon {
         }
         bytes[0x82] = self.pokerus;
         // Handle HGSS ball particularities:
-        bytes[0x83] = if !self.is_gen5 && self.ball >= HGSS_FIRST_BALL {
-            POKE_BALL
+        bytes[0x83] = if !self.is_gen5 && self.ball >= Pokeball::FIRST_HGSS_BALL {
+            Pokeball::PokeBall as u8
         } else {
-            self.ball
+            self.ball as u8
         };
         bytes[0x84] = self.met_level | (self.trainer_gender as u8) << 7;
         bytes[0x85] = self.encounter_type;
-        bytes[0x86] = if !self.is_gen5 { self.ball } else { 0 };
+        bytes[0x86] = if !self.is_gen5 { self.ball as u8 } else { 0 };
         bytes[0x87] = self.performance;
         // 0x88 - End of "boxed" Pokémon data.
 
@@ -961,9 +957,13 @@ impl Pokemon {
         let ball = bytes[0x83];
         let hgss_ball = bytes[0x86];
         pkm.ball = if !pkm.is_gen5 && hgss_ball != 0 {
-            hgss_ball
+            should_be_ok!(
+                Pokeball::try_from(hgss_ball),
+                "Invalid Pokéball ID: {}",
+                hgss_ball
+            )
         } else {
-            ball
+            should_be_ok!(Pokeball::try_from(ball), "Invalid Pokéball ID: {}", ball)
         };
         pkm.met_level = bytes[0x84] & 0x7F;
         pkm.trainer_gender = should_be_ok!(
