@@ -180,26 +180,6 @@ pub static HIDDEN_POWERS: LazyLock<Vec<String>> = LazyLock::new(|| {
     .expect("Couldn't parse hidden_power.json as valid JSON for a `Vec<String>>`")
 });
 
-pub static GAMES: LazyLock<BiMap<u8, String>> = LazyLock::new(|| {
-    // Create BiHashMap:
-    let mut games_map = BiMap::new();
-
-    // Read game names from JSON:
-    let game_names = from_str::<Vec<String>>(
-        read_to_string("data/games.json")
-            .expect("Failed to read games.json file")
-            .as_str(),
-    )
-    .expect("Couldn't parse games.json as valid JSON for a `Vec<String>>`");
-
-    // Populate the BiHashMap with the game IDs and names:
-    for (i, name) in game_names.iter().enumerate() {
-        games_map.insert(i as u8, name.clone());
-    }
-
-    games_map
-});
-
 pub static BASE_STATS: LazyLock<Vec<[u8; 7]>> = LazyLock::new(|| {
     from_str::<Vec<[u8; 7]>>(
         read_to_string("data/base_stats.json")
