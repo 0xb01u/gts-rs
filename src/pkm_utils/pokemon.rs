@@ -130,16 +130,14 @@ impl Pokemon {
     ///
     /// **This function modifies the Pokémon's nature.** See `self.nature()`.
     pub fn set_pid(&mut self, pid: u32) {
-        // Set the PID:
         self.pid = pid;
-        // Update the nature based on the new PID:
+
+        // Update other features based on the PID:
         self.nature = should_be_some!(
             Nature::from_id((pid % 25) as u16),
             "Invalid nature derived from PID: {}",
             pid
         );
-
-        // Update shininess status:
         self.is_shiny = self.is_shiny();
     }
 
@@ -149,13 +147,10 @@ impl Pokemon {
     ///
     /// **This function modifies the Pokémon's PID.** See `self.pid()`.
     pub fn set_nature(&mut self, nature: Nature) {
-        // Set the nature:
         self.nature = nature;
 
-        // Update the PID to reflect the new nature:
+        // Update PID and other features based on it:
         self.pid = self.pid.wrapping_sub(self.nature.id_and_name.id() as u32);
-
-        // Update shininess status:
         self.is_shiny = self.is_shiny();
     }
 
@@ -166,9 +161,7 @@ impl Pokemon {
     ///
     /// **This function modifies the Pokémon's level.** See `self.level()`.
     pub fn set_experience(&mut self, experience: u32) {
-        // Set the experience:
         self.experience = experience;
-        // Update the level based on the new experience:
         self.level = self.level_from_xp();
     }
 
@@ -203,7 +196,6 @@ impl Pokemon {
     /// Returns an error of kind `InvalidData` if the name is longer than 10 characters, or if it
     /// contains characters not representable in the Gen 4 character encoding.
     pub fn set_name(&mut self, name: String) -> Result<()> {
-        // Ensure the name is not longer than 10 characters:
         if name.len() > 10 {
             return Err(Error::new(
                 ErrorKind::InvalidData,
@@ -211,10 +203,9 @@ impl Pokemon {
             ));
         }
 
-        // Assert the name does not contain invalid characters by encoding it:
+        // Assert the name does not contain invalid characters:
         let _ = Self::encode_name_gen4(&name)?;
 
-        // Set the name:
         self.name = name;
 
         Ok(())
@@ -231,10 +222,9 @@ impl Pokemon {
     /// Returns an error of kind `InvalidData` if the name contains characters not representable in
     /// the Gen 4 character encoding.
     pub fn encode_name_gen4(name: &String) -> Result<Vec<u8>> {
-        // Create a vector to hold the encoded name:
         let mut encoded_name = Vec::with_capacity(20);
 
-        // Encode each character in the name using the charmap:
+        // Encode each character in the name using the charmap, and add the null terminator:
         for c in name.chars() {
             let &chr = CHARMAP
                 .get_by_right(&c)
@@ -252,21 +242,17 @@ impl Pokemon {
     ///
     /// The Gen 4 uses a custom character encoding for names.
     pub fn decode_name_gen4(name: &[u8]) -> Result<String> {
-        // Create a String to hold the decoded name:
         let mut decoded_name = String::with_capacity(10);
 
-        // Decode each character in the name using the charmap:
+        // Retrieve and decode each 16-bit character:
         for chunk in name.chunks(2) {
-            // Get the code for the chatacter:
             let char_code = u16::from_le_bytes([chunk[0], chunk[1]]);
-            // Check for the terminator:
+            // Check if the end of the name has been reached:
             if char_code == 0xffff {
                 return Ok(decoded_name);
             }
-            // Convert the chunk to a char:
-            let chr = CHARMAP.get_by_left(&char_code);
-            // If the character is not found, return an error; else, add to the decoded string:
-            match chr {
+
+            match CHARMAP.get_by_left(&char_code) {
                 Some(&chr) => decoded_name.push(chr),
                 None => {
                     return Err(Error::new(
@@ -318,18 +304,15 @@ impl Pokemon {
             .collect::<Vec<u16>>();
         let decoding_result = String::from_utf16(&byte_chars);
 
-        // Return an error if decoding fails:
         if let Err(e) = decoding_result {
             return Err(Error::new(
                 ErrorKind::InvalidData,
                 format!("Invalid UTF-16 encoding: {}", e),
             ));
         }
-
-        // Unwrap the decoded string:
         let decoded_name = should_be_ok!(decoding_result, "Invalid UTF-16 encoding");
 
-        // Check the name ends with a null terminator (0xffff):
+        // Assert the name is null-terminated (0xffff):
         let split = decoded_name.split("\u{ffff}").collect::<Vec<&str>>();
         if split.len() < 2 || split[0].is_empty() {
             return Err(Error::new(
@@ -345,7 +328,6 @@ impl Pokemon {
     ///
     /// Shininess is dependent on the Pokémon's PID, Trainer ID, and Trainer Secret ID.
     pub fn is_shiny(&self) -> bool {
-        // Get the IDs:
         let pid = self.pid();
         let tid = self.trainer_id;
         let sid = self.trainer_secret_id;
@@ -362,11 +344,10 @@ impl Pokemon {
     ///
     /// The hidden power is determined by the Pokémon's IVs.
     pub fn get_hidden_power(&self) -> (String, u8) {
-        // Declare and initialize result variables.
         let mut type_ = 0;
         let mut power = 0;
 
-        // Compute type and power from IVs:
+        // Compute type ID and power from IVs:
         let ivs = self.ivs;
         for (i, iv) in [
             Stat::Hp,
@@ -422,15 +403,13 @@ impl Pokemon {
     ///
     /// This is useful for converting boxed Pokémon into party Pokémon.
     fn generate_stats(&self) -> StatsFeature {
-        // Get the base stats for the species:
+        // Get the features used to determine the stats:
         let id = self.species.id() as usize;
         let base_stats = should_be_some!(
             BASE_STATS.get(id as usize),
             "Invalid species ID: {}",
             self.species.id()
         );
-
-        // Get other variables used to calculate the stats:
         let lv = self.level;
         let ivs = self.ivs;
         let evs = self.evs;
@@ -460,7 +439,6 @@ impl Pokemon {
             Stat::SpD => stats.spd = (stats.spd as f32 * 1.1) as u16,
             Stat::Spe => stats.spe = (stats.spe as f32 * 1.1) as u16,
             Stat::Hp => {
-                // HP cannot be increased by nature.
                 should_not_happen!("HP stat cannot be increased by nature");
             }
         }
@@ -471,7 +449,6 @@ impl Pokemon {
             Stat::SpD => stats.spd = (stats.spd as f32 * 0.9) as u16,
             Stat::Spe => stats.spe = (stats.spe as f32 * 0.9) as u16,
             Stat::Hp => {
-                // HP cannot be decreased by nature.
                 should_not_happen!("HP stat cannot be decreased by nature");
             }
         }
@@ -482,7 +459,6 @@ impl Pokemon {
     /// Serializes the Pokémon into a vector of bytes, complying with the internal format used in
     /// the games.
     pub fn serialize(&self) -> Vec<u8> {
-        // Create a vector of bytes with the maximum possible size:
         let mut bytes = if !self.is_gen5 {
             vec![0x00; GEN4_PKM_LEN]
         } else {
@@ -688,9 +664,9 @@ impl Pokemon {
             ]
             .concat(),
         );
-        // We don't care about the other data after the stats (for now).
+        // We don't care about the other data after the stats.
 
-        // Compute and store the checksum:
+        // Compute and store the correct checksum:
         let checksum = bytes[0x08..BOXED_PKM_LEN]
             .chunks(2)
             .fold(0u16, |acc, chunk| {
@@ -704,7 +680,6 @@ impl Pokemon {
     /// Deserializes a Pokémon from a byte slice, complying with the internal format used in the
     /// games.
     pub fn deserialize(bytes: &[u8]) -> Pokemon {
-        // Ensure the data is the correct size:
         assert!(
             bytes.len() == BOXED_PKM_LEN
                 || bytes.len() == GEN4_PKM_LEN
@@ -712,10 +687,8 @@ impl Pokemon {
             "Invalid Pokémon data size",
         );
 
-        // Create pokemon structure:
         let mut pkm = Pokemon::default();
 
-        // Fill the Pokémon structure with the data:
         let species_id = u16::from_le_bytes([bytes[0x08], bytes[0x09]]);
         pkm.is_gen5 = bytes.len() == GEN5_PKM_LEN || species_id > 493;
         // Block A: 0x00 - 0x28
@@ -979,7 +952,7 @@ impl Pokemon {
         // 0x88 - End of "boxed" Pokémon data.
 
         pkm.level = bytes[0x8C];
-        // Check if the Pokémon has stats:
+        // Check and add if the Pokémon has stats:
         if bytes.len() == GEN4_PKM_LEN || bytes.len() == GEN5_PKM_LEN {
             // Ignore current HP.
             pkm.stats = Some(StatsFeature {
@@ -1006,21 +979,19 @@ impl Pokemon {
     /// * `decrypted_data` - The decrypted serialized Pokémon data, using the game's internal
     ///   representation, as a vector of bytes.
     pub fn to_encryption_bypass_data(decrypted_data: &[u8]) -> Vec<u8> {
-        // Check the data has the correct size:
         assert!(
             decrypted_data.len() >= BOXED_PKM_LEN,
             "Invalid Pokémon data length: {}",
             decrypted_data.len()
         );
 
-        // Decode the PID:
         let pid = u32::from_le_bytes(
             decrypted_data[0x00..0x04]
                 .try_into()
                 .expect("Failed to convert PID slice to array"),
         );
 
-        // Create the result buffer, copy the data, and shuffle the data blocks:
+        // Prepare the data:
         let mut encrypted_data = decrypted_data.to_vec();
         Self::shuffle_blocks(&mut encrypted_data, pid);
 
@@ -1037,27 +1008,22 @@ impl Pokemon {
     /// * `decrypted_data` - The decrypted serialized Pokémon data, using the game's internal
     ///   representation, as a vector of bytes.
     pub fn to_encrypted_data(decrypted_data: &[u8]) -> Vec<u8> {
-        // Check the data has the correct size:
         assert!(
             decrypted_data.len() >= BOXED_PKM_LEN,
             "Invalid Pokémon data length: {}",
             decrypted_data.len()
         );
 
-        // Decode the PID:
         let pid = u32::from_le_bytes(
             decrypted_data[0x00..0x04]
                 .try_into()
                 .expect("Failed to convert PID slice to array"),
         );
-        // Decode the checksum:
         let checksum = (decrypted_data[0x06] as u16) + ((decrypted_data[0x07] as u16) << 8);
 
-        // Create the result buffer, copy the data, and shuffle the data blocks:
+        // Prepare and encrypt the data:
         let mut encrypted_data = decrypted_data.to_vec();
         Self::shuffle_blocks(&mut encrypted_data, pid);
-
-        // Encrypt the data:
         Self::crypt_data(&mut encrypted_data, pid, checksum);
 
         encrypted_data
@@ -1069,29 +1035,22 @@ impl Pokemon {
     /// # Arguments
     /// * `encrypted_data` - The encrypted serialized Pokémon data, as a vector of bytes.
     pub fn to_decrypted_data(encrypted_data: &[u8]) -> Vec<u8> {
-        // Check the data has the correct size:
         assert!(
             encrypted_data.len() >= BOXED_PKM_LEN,
             "Invalid Pokémon data length: {}",
             encrypted_data.len()
         );
 
-        // Decode the PID:
         let pid = u32::from_le_bytes(
             encrypted_data[0x00..0x04]
                 .try_into()
                 .expect("Failed to convert PID slice to array"),
         );
-        // Decode the checksum:
         let checksum = (encrypted_data[0x06] as u16) + ((encrypted_data[0x07] as u16) << 8);
 
-        // Create the result buffer, and copy the data:
+        // Decrypt and order the data:
         let mut decrypted_data = encrypted_data.to_vec();
-
-        // Decrypt the data:
         Self::crypt_data(&mut decrypted_data, pid, checksum);
-
-        // Unshuffle the data blocks:
         Self::unshuffle_blocks(&mut decrypted_data, pid);
 
         decrypted_data
@@ -1177,13 +1136,10 @@ impl Pokemon {
     /// * `pokemon_data` - The serialized Pokémon data to shuffle, as a mutable vector of bytes.
     /// * `pid` - The Pokémon's PID, used to determine the shuffle order.
     fn shuffle_blocks(pokemon_data: &mut Vec<u8>, pid: u32) {
-        // Get the slice to shuffle:
         let shuffle_data = &mut pokemon_data[0x08..BOXED_PKM_LEN];
-
-        // Get the shuffle order:
         let shuffle_order = Self::determine_shuffle_block_order(pid);
 
-        // Shuffle the blocks:
+        // Shuffle the data blocks according to the order:
         let mut tmp = [0u8; 0x80];
         for (i, &block_id) in shuffle_order.iter().enumerate() {
             tmp[i * 0x20..(i + 1) * 0x20]
@@ -1205,15 +1161,13 @@ impl Pokemon {
     /// * `pokemon_data` - The serialized Pokémon data to unshuffle, as a mutable vector of bytes.
     /// * `pid` - The Pokémon's PID, used to determine the unshuffle order.
     fn unshuffle_blocks(pokemon_data: &mut Vec<u8>, pid: u32) {
-        // Get the shuffled slice:
         let shuffle_data = &mut pokemon_data[0x08..BOXED_PKM_LEN];
-
-        // Get the shuffle order:
         let shuffle_order = Self::determine_shuffle_block_order(pid);
 
-        // Unshuffle the blocks, performing the opposite memcpy to shuffle_blocks:
+        // Unshuffle the blocks, according to the order:
         let mut tmp = [0u8; 0x80];
         for (i, &block_id) in shuffle_order.iter().enumerate() {
+            // (Opposite memcpy to shuffle_blocks)
             tmp[block_id * 0x20..(block_id + 1) * 0x20]
                 .copy_from_slice(&shuffle_data[i * 0x20..(i + 1) * 0x20]);
         }
@@ -1254,7 +1208,7 @@ impl Pokemon {
             [3, 2, 0, 1],
             [3, 2, 1, 0],
         ];
-        // Choose the order based on some specific middle bits of the PID:
+        // The order is chosen based on some specific middle bits of the PID:
         let order = ((pid >> 13) & 0x1F) % 24;
 
         possible_orders[order as usize]
@@ -1277,7 +1231,7 @@ impl Pokemon {
     /// saved due to the resulting file already existing, or the corresponding error if there was
     /// an error during saving.
     pub fn save(&self, dir_path: Option<&Path>, extension: Option<String>) -> Result<bool> {
-        // Retrieve save directory path and extenion:
+        // Handle optional args:
         let dir_path = match dir_path {
             Some(p) => p.to_path_buf(),
             None => Path::new("pokemon").to_path_buf(),
@@ -1303,12 +1257,12 @@ impl Pokemon {
             fs::set_permissions(&dir_path, dir_permissions)?;
         }
 
-        // Generate save file name:
+        // Save file name:
         let current_time_str = LocalTime::now().format("%Y-%m-%d_%H-%M-%S").to_string();
         let shiny_mark = if self.is_shiny() { "!" } else { "" };
         let base_name = format!("{}_{}{}", self.species.name(), self.name, shiny_mark);
 
-        // Generate the binary data to save:
+        // Data to save:
         let data = self.serialize();
 
         // Check if the resulting file already exists, not saving self if it does:
@@ -1358,7 +1312,7 @@ impl Pokemon {
                 if file_name.starts_with(base_name) && file_name.ends_with(extension) {
                     let file_path = file.path();
                     let other = fs::read(&file_path)?;
-                    if data == &other {
+                    if *data == other {
                         // The file exists and is identical to the current Pokémon data.
                         return Ok((true, Some(file_path)));
                     }
@@ -1382,7 +1336,6 @@ impl Pokemon {
     /// `Ok(pokemon)`, where `pokemon` is the loaded Pokémon, if the pokémon was loaded
     /// successfully, or the corresponding error if there was an error during loading.
     pub fn load(file_path: &Path) -> Result<Pokemon> {
-        // Check the extension is correct:
         let file_path_str = file_path.to_string_lossy();
         if !file_path_str.ends_with(".pkm")
             && !file_path_str.ends_with(".pk4")
@@ -1394,16 +1347,14 @@ impl Pokemon {
             ));
         }
 
-        // Read the file:
         let data = fs::read(file_path)?;
-        // Check the file size is valid:
+
         assert!(
             data.len() == BOXED_PKM_LEN || data.len() == GEN4_PKM_LEN || data.len() == GEN5_PKM_LEN,
             "Invalid Pokémon file size: {}",
             data.len(),
         );
 
-        // Deserialize the Pokémon from the data:
         let pokemon = Pokemon::deserialize(&data);
 
         Ok(pokemon)

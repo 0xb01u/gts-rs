@@ -43,7 +43,6 @@ const DEFAULT_LOG_LEVEL: &str = "info";
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    // Print the license notice:
     print_license();
 
     // Check for superuser privileges:
@@ -59,16 +58,14 @@ async fn main() -> Result<()> {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or(DEFAULT_LOG_LEVEL))
         .init();
 
-    // Create the DNS server:
+    // Create and run servers, print exteral IP:
     let dns_server = DNSServer::new(None)
         .await
         .expect("Could not create the DNS server");
 
-    // Get and print the external IP for the servers:
     let ip = dns_server.ip();
     println!("GTS-RS servers running on IP: {}", ip);
 
-    // Run the DNS server using a background thread:
     let dns_handle = tokio::spawn(async move {
         dns_server
             .run()
@@ -76,7 +73,6 @@ async fn main() -> Result<()> {
             .expect("The DNS server failed to run");
     });
 
-    // Create and run the HTTP server:
     let http_handle = run_http_server().expect("The HTTP server failed to run.");
 
     // Await for both servers to finish (which should never happen):

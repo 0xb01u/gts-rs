@@ -73,18 +73,15 @@ fn gts_response_gen4(body: impl MessageBody + 'static) -> HttpResponse<BoxBody> 
         ("Cache-control", "private"),
     ];
 
-    // Build the response object and add the headers:
+    // Build the response object, with the headers and the body, and try to return it:
     let mut response_builder = HttpResponseBuilder::new(StatusCode::OK);
     for header in headers {
         response_builder.append_header(header);
     }
-
-    // Add the body to the response and return it:
     let response = response_builder.message_body(BoxBody::new(body));
     if let Ok(response) = response {
         response
     } else {
-        // If an error occurs while setting the body, log it and return an error response:
         log::error!("Failed to build response: {:?}", response.err());
         HttpResponse::InternalServerError().finish()
     }
@@ -116,7 +113,7 @@ fn gts_response_gen5(body: impl MessageBody + 'static) -> HttpResponse<BoxBody> 
         }
     };
 
-    // Generate the footer:
+    // Generate and append the footer:
     let b64_body = URL_SAFE.encode(&body_bytes);
     let mut hasher = Sha1::new();
     hasher.update(GEN5_SALT);
@@ -124,7 +121,6 @@ fn gts_response_gen5(body: impl MessageBody + 'static) -> HttpResponse<BoxBody> 
     hasher.update(GEN5_SALT);
     let footer = format!("{:x}", hasher.finalize());
 
-    // Append the footer to the body:
     body_bytes.extend(footer.as_bytes());
 
     // Add the proper heads, similarly to Gen 4 responses:
@@ -310,14 +306,13 @@ macro_rules! result_endpoint {
             async fn [<result_gen$gen>]() -> HttpResponse {
                 // Loop until a valid Pokémon is specified, or no Pokémon is sent:
                 let pokemon = loop {
-                    // Create the buffer for the path:
                     let mut path = String::new();
 
                     println!("Enter the path or drag the .pkm/.pk{} file here.", $gen);
                     println!("Leave blank to not send a Pokémon and proceed through the GTS \
                         (for deposits).");
 
-                    // Read the path or skip:
+                    // Read and sanitize the path, or skip:
                     if stdin().read_line(&mut path).is_err() {
                         log::error!("Error reading from stdin.");
                         continue;
@@ -326,17 +321,15 @@ macro_rules! result_endpoint {
                             Pokémon deposit.");
                         return response_from_body!(b"\x05\x00");
                     }
-                    // Remove trailing characters:
-                    path = path.trim().to_string();
 
-                    // Remove quotes in the path:
+                    path = path.trim().to_string();
                     if (path.starts_with("'") && path.ends_with("'"))
                         || path.starts_with("\"") && path.ends_with("\"")
                     {
                         path = path[1..path.len() - 1].to_string();
                     }
 
-                    // Load the Pokémon struct:
+                    // Load the Pokémon struct and return it:
                     let pokemon_load = Pokemon::load(Path::new(&path));
                     let pokemon = match pokemon_load {
                         Ok(pokemon) => pokemon,
@@ -345,27 +338,20 @@ macro_rules! result_endpoint {
                             continue;
                         }
                     };
-
-                    // Log the successful loading:
                     log::info!("Pokémon loaded from {} successfully.", path);
 
-                    // Assert the Pokémon is a gen $gen Pokémon:
                     if pokemon.is_gen5() != ($gen == 5) {
                         log::error!("The Pokémon selected is not a Gen {} Pokémon.", $gen);
                         continue;
                     }
 
-                    // A valid Pokémon was loaded; exit the loop:
                     break pokemon;
                 };
 
-                // Create the GTS reception struct from the Pokémon:
-                let reception = GTSReception::from_pokemon(&pokemon);
+                // Build response:
+                let body = GTSReception::from_pokemon(&pokemon).serialize();
 
-                // Serialize the reception into the packet to send:
-                let packet = reception.serialize();
-
-                response_from_body!(packet)
+                response_from_body!(body)
             }
         }
     };
@@ -389,7 +375,6 @@ const LISTENING_PORT: u16 = 80;
 ///
 /// The server is bound to port 80 (HTTP) on all IPv4 interfaces in the system.
 pub fn run_http_server() -> Result<Server> {
-    // Create the server and configure it:
     let server = HttpServer::new(|| {
         App::new()
             // Log actix HTTP server activity, if the log level is Debug or higher:
@@ -428,9 +413,7 @@ pub fn run_http_server() -> Result<Server> {
     .workers(1)
     .bind((ALL_V4_INTERFACES, LISTENING_PORT))?;
 
-    // Notify startup:
     log::info!("Running HTTP server on {}", server.addrs()[0]);
 
-    // Start the server and return it:
     Ok(server.run())
 }

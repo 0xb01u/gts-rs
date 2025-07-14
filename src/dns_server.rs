@@ -89,16 +89,14 @@ impl DNSServer {
             Some(ip) => ip,
             None => "178.62.43.212".to_string(), // Default DNS server.
         };
-        // Parse the IP into a Ipv4Addr data type:
         let ip_to_proxy = Ipv4Addr::from_str(&ip_to_proxy)
             .expect(format!("[DNS resolver] Invalid IP address: {}", ip_to_proxy).as_str());
         let addr_to_proxy = SocketAddr::new(ip_to_proxy.into(), 53);
 
-        // Create a DNS client to query the real DNS server:
+        // Create a DNS client to query the real DNS server (in a background thread):
         let udp_connection =
             UdpClientStream::builder(addr_to_proxy, TokioRuntimeProvider::default()).build();
         let (client, bg) = DNSClient::connect(udp_connection).await?;
-        // Spawn the background task to handle the DNS client:
         tokio::spawn(bg);
 
         // Get the local IP address for external connections of this DNS proxy:
@@ -125,11 +123,9 @@ impl DNSServer {
         // local network.
         let socket = UdpSocket::bind((ALL_V4_INTERFACES, ANY_PORT))?; // Dummy socket.
         socket.connect((remote_dns_ip, 53u16))?; // Dummy connection.
-
-        // Get the address assigned to the socket:
         let local_addr = socket.local_addr()?;
 
-        // Return the contained IPv4 address:
+        // Return the external IPv4 address:
         match local_addr.ip() {
             IpAddr::V4(ip) => Ok(ip),
             // An IPv6 should never occur, as an IPv4 address was requested above.
@@ -147,21 +143,18 @@ impl DNSServer {
     ///
     /// On proper execution (i.e. no errors), this function does not return.
     pub async fn run(&self) -> Result<()> {
-        // Notify startup:
         log::info!("DNS Proxy server started: {}.", self);
 
-        // Buffer for receiving DNS requests
-        let mut buf = [0u8; 512];
+        let mut listening_buf = [0u8; 512];
 
         // Main loop for processing DNS requests:
         loop {
             // Wait for a DNS request from a client:
-            let (_, client_address) = self.listening_socket.recv_from(&mut buf)?;
-            // Log the address of the client that made the request:
+            let (_, client_address) = self.listening_socket.recv_from(&mut listening_buf)?;
             log::debug!("New DNS request received from {}", client_address);
 
             // Parse the received buffer into a DNS message and log the query:
-            let Ok(dns_msg) = Message::from_vec(&buf) else {
+            let Ok(dns_msg) = Message::from_vec(&listening_buf) else {
                 log::debug!("Received message is not a DNS message.");
                 continue;
             };
@@ -190,9 +183,8 @@ impl DNSServer {
                         continue 'retry_dns_sending;
                     }
 
-                    // Modify respone to impersonate Pokémon's servers:
+                    // Modify respone to impersonate Pokémon's servers, and send back:
                     let modified_response = self.modify_response(response?, client_id);
-
                     self.listening_socket
                         .send_to(&modified_response.to_vec()?, client_address)?;
                 }
@@ -224,12 +216,10 @@ impl DNSServer {
         // Modify the response to change Nintendo's servers' IP to our IP:
         for answer in response.answers_mut().iter_mut() {
             if answer.record_type() == RecordType::A {
-                // Log the requested A record:
                 log::debug!("DNS returns IP {} for {}", answer.data(), answer.name());
 
-                // Check if the A record matches Pokémon's GTS servers:
+                // Check if the A record matches Pokémon's GTS servers, and modify it:
                 if answer.name().to_string() == "gamestats2.gs.nintendowifi.net.".to_string() {
-                    // Modify the IP address and log the change:
                     answer.set_data(RData::A(A(self.proxy_ip)));
                     log::debug!("Modified answer: {}", answer);
                 }

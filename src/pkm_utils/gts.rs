@@ -163,7 +163,7 @@ impl GTSData {
         let language = pokemon.language;
         let unity_tower_floors = if pokemon.is_gen5() { Some(0) } else { None };
 
-        // Fill the data for the requested Pokémon:
+        // Data for the requested Pokémon:
         let req_pkm_id = if !pokemon.is_gen5() {
             rng.random_range(1..=493)
         } else {
@@ -208,10 +208,8 @@ impl GTSData {
     /// # Arguments
     /// * `is_gen5` - Whether the data is from a Gen 5 GTS reception or not.
     fn serialize(&self, is_gen5: bool) -> Vec<u8> {
-        // Create the data vector to fill:
         let mut data = vec![0; if !is_gen5 { 0x38 } else { 0x3C }];
 
-        // Fill in with the data:
         data[0x00..0x02].copy_from_slice(&self.pkm_id.to_le_bytes());
         data[0x02] = self.gender as u8;
         data[0x03] = self.lvl;
@@ -278,7 +276,6 @@ impl GTSData {
     /// * `data` - The byte slice containing the GTS data to deserialize.
     /// * `is_gen5` - Whether the data is from a Gen 5 GTS reception.
     fn deserialize(data: &[u8], is_gen5: bool) -> Self {
-        // Check the data has the correct size:
         if !is_gen5 {
             assert!(
                 data.len() == 0x124,
@@ -293,7 +290,6 @@ impl GTSData {
             );
         }
 
-        // Fill in the fields:
         let pkm_id = u16::from_le_bytes([data[0x00], data[0x01]]);
         let gender = should_be_ok!(
             Gender::try_from(data[0x02] - 1),
@@ -443,7 +439,7 @@ impl GTSDeposit {
     /// Returns Ok(`GTSDeposit`) on correct execution, or an error if the data could not be decoded
     /// as base64.
     pub fn from_base64(base64_data: &String, is_gen5: bool) -> Result<Self> {
-        // Decode the base64 data:
+        // Decode the data:
         let data = match URL_SAFE_B64.decode(base64_data) {
             Ok(decoded) => decoded,
             Err(e) => {
@@ -525,7 +521,6 @@ impl GTSReception {
     /// # Arguments
     /// * `pokemon` - The Pokémon with which to create the reception.
     pub fn from_pokemon(pokemon: &Pokemon) -> Self {
-        // Create the GTS data from the Pokémon:
         let gts_data = GTSData::from_pokemon(pokemon);
 
         Self {
@@ -537,20 +532,17 @@ impl GTSReception {
 
     /// Serializes the GTS reception data into a byte vector.
     pub fn serialize(&self) -> Vec<u8> {
-        // Create the result vector:
         let mut data;
 
-        // Serialize and append the Pokémon data:
         let pokemon_data = self.pokemon.serialize();
         let pokemon_encrypted_data = Pokemon::to_encrypted_data(&pokemon_data);
         data = pokemon_encrypted_data;
 
-        // Append the Gen 5 padding:
         if self.is_gen5 {
+            // Gen 5 padding:
             data.extend(vec![0; 0x10]);
         }
 
-        // Serialize and append the GTS data:
         let gts_data = self.gts_data.serialize(self.is_gen5);
         data.extend(gts_data);
 

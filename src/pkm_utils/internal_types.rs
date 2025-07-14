@@ -310,10 +310,7 @@ impl Nature {
     ///
     /// Returns `None` if the ID is not a valid nature ID.
     pub fn from_id(id: u16) -> Option<Self> {
-        // Construct the `IdFeature` for the nature:
         let id_and_name = IdFeature::from_nature_id(id)?;
-
-        // Create the nature:
         Some(Self::new(id_and_name))
     }
 
@@ -324,10 +321,7 @@ impl Nature {
     ///
     /// Returns `None` if the name is not a valid nature name.
     pub fn from_name(name: &str) -> Option<Self> {
-        // Construct the `IdFeature` for the nature:
         let id_and_name = IdFeature::from_nature_name(name)?;
-
-        // Create the nature:
         Some(Self::new(id_and_name))
     }
 
@@ -338,10 +332,9 @@ impl Nature {
     ///
     /// **Note:** This function is intended for internal use only.
     fn new(id_and_name: IdFeature) -> Self {
-        // Get the stat changes for the nature:
+        // Find the increased and decreased stats:
         let stat_changes = NATURE_MODIFIERS[id_and_name.id as usize];
 
-        // Find the increased and decreased stats:
         let mut increased_stat = None;
         let mut decreased_stat = None;
         for (i, &multiplier) in stat_changes.iter().enumerate() {

@@ -26,10 +26,7 @@ use crate::gts::Geonet;
 ///
 /// Maps character IDs to their corresponding UTF-16 characters, and inversely.
 pub static CHARMAP: LazyLock<BiMap<u16, char>> = LazyLock::new(|| {
-    // Create BiHashMap:
-    let mut character_map = BiHashMap::new();
-
-    // Read character map from JSON:
+    // Read from file and cast:
     let map = from_str::<HashMap<String, HashMap<String, String>>>(
         read_to_string("data/char_map.json")
             .expect("Failed to read the character map file")
@@ -41,6 +38,7 @@ pub static CHARMAP: LazyLock<BiMap<u16, char>> = LazyLock::new(|| {
         .expect("Failed to load character map: no 'characters' key found");
 
     // Convert the HashMap to a BiHashMap:
+    let mut character_map = BiHashMap::new();
     for (id, character) in charmap.iter() {
         // Convert the character from String to char:
         character_map.insert(
@@ -53,10 +51,7 @@ pub static CHARMAP: LazyLock<BiMap<u16, char>> = LazyLock::new(|| {
 });
 
 pub static NATURES: LazyLock<BiMap<u16, String>> = LazyLock::new(|| {
-    // Create BiHashMap:
-    let mut natures_map = BiHashMap::new();
-
-    // Read nature names from JSON:
+    // Read from file and cast:
     let nature_names = from_str::<Vec<String>>(
         read_to_string("data/natures.json")
             .expect("Failed to read natures.json file")
@@ -64,7 +59,8 @@ pub static NATURES: LazyLock<BiMap<u16, String>> = LazyLock::new(|| {
     )
     .expect("Couldn't parse natures.json as valid JSON for a `Vec<String>>`");
 
-    // Populate the BiHashMap with the nature IDs and names:
+    // Create a BiHashMap with the nature IDs and names:
+    let mut natures_map = BiHashMap::new();
     for (i, name) in nature_names.iter().enumerate() {
         natures_map.insert(i as u16, name.clone());
     }
@@ -73,7 +69,7 @@ pub static NATURES: LazyLock<BiMap<u16, String>> = LazyLock::new(|| {
 });
 
 pub static NATURE_MODIFIERS: LazyLock<Vec<[f32; 5]>> = LazyLock::new(|| {
-    // Read nature modifiers from JSON:
+    // Read from file and cast:
     from_str::<Vec<[f32; 5]>>(
         read_to_string("data/nature_modifiers.json")
             .expect("Failed to read nature_modifiers.json file")
@@ -83,10 +79,7 @@ pub static NATURE_MODIFIERS: LazyLock<Vec<[f32; 5]>> = LazyLock::new(|| {
 });
 
 pub static SPECIES: LazyLock<BiMap<u16, String>> = LazyLock::new(|| {
-    // Create BiHashMap:
-    let mut species_map = BiHashMap::new();
-
-    // Read species names from JSON:
+    // Read from file and cast:
     let species_names = from_str::<Vec<String>>(
         read_to_string("data/species.json")
             .expect("Failed to read species.json file")
@@ -94,7 +87,8 @@ pub static SPECIES: LazyLock<BiMap<u16, String>> = LazyLock::new(|| {
     )
     .expect("Couldn't parse species.json as valid JSON for a `Vec<String>>`");
 
-    // Populate the BiHashMap with the species IDs and names:
+    // Create a BiHashMap with the species IDs and names:
+    let mut species_map = BiHashMap::new();
     for (i, name) in species_names.iter().enumerate() {
         species_map.insert(i as u16, name.clone());
     }
@@ -103,10 +97,7 @@ pub static SPECIES: LazyLock<BiMap<u16, String>> = LazyLock::new(|| {
 });
 
 pub static ITEMS_GEN4: LazyLock<BiMap<u16, String>> = LazyLock::new(|| {
-    // Create BiHashMap:
-    let mut item_map = BiHashMap::new();
-
-    // Read item names from JSON:
+    // Read from file and cast:
     let item_names = from_str::<Vec<String>>(
         read_to_string("data/items.json")
             .expect("Failed to read items.json file")
@@ -114,7 +105,8 @@ pub static ITEMS_GEN4: LazyLock<BiMap<u16, String>> = LazyLock::new(|| {
     )
     .expect("Couldn't parse items.json as valid JSON for a `Vec<String>>`");
 
-    // Populate the BiHashMap with the item IDs and names:
+    // Create a BiHashMap with the item IDs and names:
+    let mut item_map = BiHashMap::new();
     for (i, name) in item_names.iter().enumerate() {
         item_map.insert(i as u16, name.clone());
     }
@@ -123,10 +115,7 @@ pub static ITEMS_GEN4: LazyLock<BiMap<u16, String>> = LazyLock::new(|| {
 });
 
 pub static ITEMS_GEN5: LazyLock<BiMap<u16, String>> = LazyLock::new(|| {
-    // Create BiHashMap:
-    let mut item_map = BiHashMap::new();
-
-    // Read item names from JSON:
+    // Read from file and cast:
     let item_names = from_str::<Vec<String>>(
         read_to_string("data/itemsg5.json")
             .expect("Failed to read items_gen5.json file")
@@ -134,7 +123,8 @@ pub static ITEMS_GEN5: LazyLock<BiMap<u16, String>> = LazyLock::new(|| {
     )
     .expect("Couldn't parse itemsg5.json as valid JSON for a `Vec<String>>`");
 
-    // Populate the BiHashMap with the item IDs and names:
+    // Create a BiHashMap with the item IDs and names:
+    let mut item_map = BiHashMap::new();
     for (i, name) in item_names.iter().enumerate() {
         item_map.insert(i as u16, name.clone());
     }
@@ -143,10 +133,7 @@ pub static ITEMS_GEN5: LazyLock<BiMap<u16, String>> = LazyLock::new(|| {
 });
 
 pub static ABILITIES: LazyLock<BiMap<u16, String>> = LazyLock::new(|| {
-    // Create BiHashMap:
-    let mut ability_map = BiHashMap::new();
-
-    // Read ability names from JSON:
+    // Read from file and cast:
     let ability_names = from_str::<Vec<String>>(
         read_to_string("data/abilities.json")
             .expect("Failed to read abilities.json file")
@@ -154,7 +141,8 @@ pub static ABILITIES: LazyLock<BiMap<u16, String>> = LazyLock::new(|| {
     )
     .expect("Couldn't parse abilities.json as valid JSON for a `Vec<String>>`");
 
-    // Populate the BiHashMap with the ability IDs and names:
+    // Create a BiHashMap with the ability IDs and names:
+    let mut ability_map = BiHashMap::new();
     for (i, name) in ability_names.iter().enumerate() {
         ability_map.insert(i as u16, name.clone());
     }
@@ -163,6 +151,7 @@ pub static ABILITIES: LazyLock<BiMap<u16, String>> = LazyLock::new(|| {
 });
 
 pub static MOVES: LazyLock<Vec<String>> = LazyLock::new(|| {
+    // Read from file and cast:
     from_str::<Vec<String>>(
         read_to_string("data/moves.json")
             .expect("Failed to read moves.json file")
@@ -172,6 +161,7 @@ pub static MOVES: LazyLock<Vec<String>> = LazyLock::new(|| {
 });
 
 pub static HIDDEN_POWERS: LazyLock<Vec<String>> = LazyLock::new(|| {
+    // Read from file and cast:
     from_str::<Vec<String>>(
         read_to_string("data/hidden_power.json")
             .expect("Failed to read hidden_power.json file")
@@ -181,6 +171,7 @@ pub static HIDDEN_POWERS: LazyLock<Vec<String>> = LazyLock::new(|| {
 });
 
 pub static BASE_STATS: LazyLock<Vec<[u8; 7]>> = LazyLock::new(|| {
+    // Read from file and cast:
     from_str::<Vec<[u8; 7]>>(
         read_to_string("data/base_stats.json")
             .expect("Failed to read base_stats.json file")
@@ -190,6 +181,7 @@ pub static BASE_STATS: LazyLock<Vec<[u8; 7]>> = LazyLock::new(|| {
 });
 
 pub static LEVEL_CURVES: LazyLock<[[u32; 6]; 101]> = LazyLock::new(|| {
+    // Read from file and cast:
     from_str::<Vec<[u32; 6]>>(
         read_to_string("data/level_curves.json")
             .expect("Failed to read level_curves.json file")
@@ -201,6 +193,7 @@ pub static LEVEL_CURVES: LazyLock<[[u32; 6]; 101]> = LazyLock::new(|| {
 });
 
 pub static GEONET_GEN5: LazyLock<Geonet> = LazyLock::new(|| {
+    // Read from file and cast:
     from_str::<Geonet>(
         read_to_string("data/geonet5.json")
             .expect("Failed to read geonet5.json file")
