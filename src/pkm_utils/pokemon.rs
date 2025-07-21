@@ -32,6 +32,7 @@ use crate::{data_maps::*, internal_types::*, should_be_ok, should_be_some, shoul
 const BOXED_PKM_LEN: usize = 0x88;
 const GEN4_PKM_LEN: usize = 0xEC;
 const GEN5_PKM_LEN: usize = 0xDC;
+const LAST_GEN4_POKEMON: u16 = 493; // Last Pokémon in Gen 4 has ID 493 (Arceus).
 
 // Gen 4 Pokémon structure documentation: https://projectpokemon.org/docs/gen-4/pkm-structure-r65/
 // Gen 5 Pokémon structure documentation: https://projectpokemon.org/home/docs/gen-5/bw-save-structure-r60/
@@ -690,7 +691,7 @@ impl Pokemon {
         let mut pkm = Pokemon::default();
 
         let species_id = u16::from_le_bytes([bytes[0x08], bytes[0x09]]);
-        pkm.is_gen5 = bytes.len() == GEN5_PKM_LEN || species_id > 493;
+        pkm.is_gen5 = bytes.len() == GEN5_PKM_LEN || species_id > LAST_GEN4_POKEMON;
         // Block A: 0x00 - 0x28
         pkm.set_pid(u32::from_le_bytes([
             bytes[0x00],
@@ -1358,5 +1359,56 @@ impl Pokemon {
         let pokemon = Pokemon::deserialize(&data);
 
         Ok(pokemon)
+    }
+
+    /// Converts a Pokémon from Gen 4 to Gen 5.
+    ///
+    /// This makes it possible to send a Pokémon received from a Gen 4 game to Gen 4 game.
+    pub fn convert_to_gen5(&mut self) {
+        if self.is_gen5 {
+            return;
+        }
+
+        self.is_gen5 = true;
+
+        // Set locations to the one used for Poké Transfers from previous gens:
+        self.met_location = Location::Gen5(Gen5Location::OtherRegionDistantLand);
+        if self.egg_location == Location::Gen4(Gen4Location::NO_EGG_LOCATION) {
+            self.egg_location = Location::Gen5(Gen5Location::NO_EGG_LOCATION);
+        } else {
+            self.egg_location = Location::Gen5(Gen5Location::OtherRegionDistantLand);
+        }
+    }
+
+    /// Attempts to convert a Pokémon from Gen 5 to Gen 4.
+    ///
+    /// This makes it possible, for valid Gen <=4 Pokémon, to send a Gen 5-received Pokémon to Gen
+    /// 4 games.
+    ///
+    /// # Returns
+    /// `Ok(())` if the conversion was successful, or an error if the Pokémon is from Generation 5.
+    pub fn try_convert_to_gen4(&mut self) -> Result<()> {
+        if !self.is_gen5 {
+            return Ok(());
+        }
+
+        if self.species.id() > LAST_GEN4_POKEMON {
+            return Err(Error::new(
+                ErrorKind::InvalidInput,
+                "The Pokémon was introduced in Gen 5",
+            ));
+        }
+
+        self.is_gen5 = false;
+
+        // Set locations to the default for unknown locations:
+        self.met_location = Location::Gen4(Gen4Location::FarawayPlace);
+        if self.egg_location == Location::Gen5(Gen5Location::NO_EGG_LOCATION) {
+            self.egg_location = Location::Gen4(Gen4Location::NO_EGG_LOCATION);
+        } else {
+            self.egg_location = Location::Gen4(Gen4Location::FarawayPlace);
+        }
+
+        Ok(())
     }
 }

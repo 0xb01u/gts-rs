@@ -331,7 +331,7 @@ macro_rules! result_endpoint {
 
                     // Load the Pokémon struct and return it:
                     let pokemon_load = Pokemon::load(Path::new(&path));
-                    let pokemon = match pokemon_load {
+                    let mut pokemon = match pokemon_load {
                         Ok(pokemon) => pokemon,
                         Err(e) => {
                             log::error!("Failed to load Gen {} Pokémon from {}: {}", $gen, path, e);
@@ -340,9 +340,16 @@ macro_rules! result_endpoint {
                     };
                     log::info!("Pokémon loaded from {} successfully.", path);
 
-                    if pokemon.is_gen5() != ($gen == 5) {
-                        log::error!("The Pokémon selected is not a Gen {} Pokémon.", $gen);
-                        continue;
+                    if !pokemon.is_gen5() && ($gen == 5) {
+                        log::warn!("Sending a Gen 4 Pokémon to a Gen 5 game.");
+                        pokemon.convert_to_gen5();
+                    } else if pokemon.is_gen5() && ($gen == 4) {
+                        if pokemon.try_convert_to_gen4().is_ok() {
+                            log::warn!("Sending a Gen 5 Pokémon to a Gen 4 game.");
+                        } else {
+                            log::error!("Cannot send that Gen 5 Pokémon to a Gen 4 game.");
+                            continue;
+                        }
                     }
 
                     break pokemon;

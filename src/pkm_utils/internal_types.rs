@@ -1203,6 +1203,8 @@ pub enum Gen4Location {
 }
 
 impl Gen4Location {
+    /// Default egg location for Pokémon that did not hatch from an egg.
+    pub const NO_EGG_LOCATION: Self = Gen4Location::MysteryZone;
     pub const DP_LAST_LOCATION: Self = Gen4Location::BattlePark;
 }
 
@@ -1786,6 +1788,8 @@ pub enum Gen5Location {
 // Aliases for reused IDs across gen 5 locations:
 #[allow(non_upper_case_globals)]
 impl Gen5Location {
+    /// Default egg location for Pokémon that did not hatch from an egg.
+    pub const NO_EGG_LOCATION: Self = Self::Dashes;
     pub const ColdStorage: Self = Self::ColdStorageOrPWT;
     pub const PWT: Self = Self::ColdStorageOrPWT;
     pub const TreasureHunter: Self = Self::TreasureHunterOrPKMNBreeder;
@@ -1793,7 +1797,7 @@ impl Gen5Location {
 }
 
 /// Enum that identifies the different locations in the Gen 4 and Gen 5 games.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Location {
     /// A location in a Gen 4 game.
     Gen4(Gen4Location),
