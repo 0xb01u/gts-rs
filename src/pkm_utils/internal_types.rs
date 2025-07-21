@@ -551,6 +551,7 @@ pub enum Pokeball {
 
 impl Pokeball {
     pub const FIRST_HGSS_BALL: Self = Pokeball::FastBall;
+    pub const LAST_GEN4_BALL: Self = Pokeball::SportBall;
 }
 
 // List of Gen 4 locations:

@@ -33,6 +33,8 @@ const BOXED_PKM_LEN: usize = 0x88;
 const GEN4_PKM_LEN: usize = 0xEC;
 const GEN5_PKM_LEN: usize = 0xDC;
 const LAST_GEN4_POKEMON: u16 = 493; // Last Pokémon in Gen 4 has ID 493 (Arceus).
+const LAST_GEN4_ITEM: u16 = 536; // Last item in Gen 4 has ID 536 (Enigma Stone).
+const LAST_GEN4_MOVE: u16 = 467; // Last move in Gen 4 has ID 467 (Shadow Force).
 
 // Gen 4 Pokémon structure documentation: https://projectpokemon.org/docs/gen-4/pkm-structure-r65/
 // Gen 5 Pokémon structure documentation: https://projectpokemon.org/home/docs/gen-5/bw-save-structure-r60/
@@ -1407,6 +1409,36 @@ impl Pokemon {
             self.egg_location = Location::Gen4(Gen4Location::NO_EGG_LOCATION);
         } else {
             self.egg_location = Location::Gen4(Gen4Location::FarawayPlace);
+        }
+
+        if self.ball > Pokeball::LAST_GEN4_BALL {
+            self.ball = Pokeball::default();
+        }
+
+        if self.held_item.id() > LAST_GEN4_ITEM {
+            self.held_item = should_be_some!(
+                IdFeature::from_gen4_item_id(0),
+                "Could not get Gen 4 `None` item from items map"
+            );
+        }
+
+        // Delete moves unavailable in Gen 4; set Struggle as only move if all 4 are erased:
+        let mut erased_moves = 0;
+        for mov in self.moves.iter_mut() {
+            if mov.id() > LAST_GEN4_MOVE {
+                *mov = should_be_some!(
+                    IdFeature::from_move_id(0),
+                    "Could not get Gen 4 `None` move from moves map"
+                );
+                erased_moves += 1;
+            }
+        }
+        if erased_moves == 4 {
+            self.moves[0] = should_be_some!(
+                IdFeature::from_move_name("Struggle"),
+                "Could not get Gen 4 `Struggle` move from moves map"
+            );
+            self.move_pps[0] = 1;
         }
 
         Ok(())
