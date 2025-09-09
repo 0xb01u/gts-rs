@@ -182,7 +182,7 @@ handle_request!(5);
 // Gen 5 endpoints use the `/syachi2ds/web` root path.
 //
 // Most GTS services are serviced under the `/worldexchange` subpath, with the exception of
-// `set_profile`. That is serviced under `/worldexchange` for Diamond, Pearl, Heargold and
+// `set_profile`. That is serviced under `/worldexchange` for Diamond, Pearl, Heartgold and
 // Soulsilver, but under the root path for Platinum and the Gen 5 games.
 //
 // Therefore, most functions service more than one endpoint. Commonly, they service 2 endpoints
