@@ -18,7 +18,7 @@ This is a Rust re-implementation of the [original IR-GTS-MG Python script](https
 
  1. Clone the repository to your local machine:
 ```
-git clone https://github.com/0xb01u/gts-rs.git
+git clone https://codeberg.org/bolu/gts-rs.git
 ```
  * You can also download the repository as a ZIP and extract it, instead.
 

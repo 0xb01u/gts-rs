@@ -3,6 +3,7 @@ name = "gts-rs"
 version = "0.1.0"
 edition = "2024"
 authors = ["Bolu <bolu@tuta.io>"]
+repository = "https://codeberg.org/bolu/gts-rs"
 
 [lib]
 name = "pkm_utils"
